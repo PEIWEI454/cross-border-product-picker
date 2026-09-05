@@ -1,0 +1,2959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球跨境智能爆品预测选品系统</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js" integrity="sha384-pPi0zxBAoDu6+JXW/C68UZLvBUUtU+7zonhif43rqj7pxsGyqyqzcian2Rj37Rss" crossorigin="anonymous"></script>
+<style>
+:root {
+  --navy-900: #0A1F33;
+  --navy-800: #0F2942;
+  --navy-700: #1A3A5C;
+  --navy-600: #244B73;
+  --amber-500: #F59E0B;
+  --amber-400: #FBBF24;
+  --amber-100: #FEF3C7;
+  --green-500: #10B981;
+  --green-100: #D1FAE5;
+  --red-500: #EF4444;
+  --red-100: #FEE2E2;
+  --blue-500: #3B82F6;
+  --blue-100: #DBEAFE;
+  --bg-50: #F8F7F4;
+  --bg-100: #F1EFE9;
+  --text-900: #1A1A1A;
+  --text-700: #404040;
+  --text-500: #737373;
+  --text-300: #A3A3A3;
+  --border: #E5E2DB;
+  --card-shadow: 0 1px 3px rgba(15, 41, 66, 0.08), 0 1px 2px rgba(15, 41, 66, 0.04);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-50);
+  color: var(--text-900);
+  min-width: 1280px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ===== 布局 ===== */
+.app-layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 240px;
+  background: var(--navy-900);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.logo-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: var(--amber-500);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900;
+  color: var(--navy-900);
+  font-size: 16px;
+}
+.logo-sub {
+  font-size: 11px;
+  color: var(--text-300);
+  margin-top: 4px;
+  margin-left: 42px;
+}
+.nav-menu { flex: 1; padding: 16px 12px; }
+.nav-group-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-300);
+  padding: 12px 12px 8px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  transition: all 0.15s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.nav-item.active {
+  background: var(--amber-500);
+  color: var(--navy-900);
+  font-weight: 700;
+}
+.nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+  color: var(--text-300);
+}
+.data-update-time { display: flex; align-items: center; gap: 6px; }
+.update-dot {
+  width: 6px; height: 6px;
+  background: var(--green-500);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 顶部栏 ===== */
+.topbar {
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy-900);
+}
+.page-breadcrumb {
+  font-size: 12px;
+  color: var(--text-500);
+  margin-left: 8px;
+}
+.topbar-filters {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.filter-select {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--text-700);
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+}
+.filter-select:focus { border-color: var(--amber-500); }
+.filter-label {
+  font-size: 12px;
+  color: var(--text-500);
+  margin-right: -4px;
+}
+
+/* ===== 内容区 ===== */
+.content-area {
+  padding: 24px;
+  flex: 1;
+}
+.view { display: none; }
+.view.active { display: block; }
+
+/* ===== KPI 卡片 ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--amber-500);
+}
+.kpi-card.green::before { background: var(--green-500); }
+.kpi-card.blue::before { background: var(--blue-500); }
+.kpi-card.red::before { background: var(--red-500); }
+.kpi-label {
+  font-size: 12px;
+  color: var(--text-500);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.kpi-value {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--navy-900);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.2;
+}
+.kpi-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-500);
+  margin-left: 4px;
+}
+.kpi-trend {
+  font-size: 12px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpi-trend.up { color: var(--green-500); }
+.kpi-trend.down { color: var(--red-500); }
+
+/* ===== 卡片通用 ===== */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy-900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--amber-100);
+  color: #92400E;
+  font-weight: 600;
+}
+.card-actions { display: flex; gap: 8px; }
+.btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-700);
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--amber-500); color: var(--amber-500); }
+.btn.primary {
+  background: var(--amber-500);
+  color: var(--navy-900);
+  border-color: var(--amber-500);
+}
+.btn.primary:hover { background: var(--amber-400); }
+.card-body { padding: 20px; }
+
+/* ===== 爆品榜单表格 ===== */
+.product-table { width: 100%; border-collapse: collapse; }
+.product-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-500);
+  background: var(--bg-50);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.product-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.product-table tr:last-child td { border-bottom: none; }
+.product-table tr:hover { background: var(--bg-50); cursor: pointer; }
+.product-name {
+  font-weight: 600;
+  color: var(--navy-900);
+  margin-bottom: 2px;
+}
+.product-category {
+  font-size: 11px;
+  color: var(--text-500);
+}
+.score-ring {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  position: relative;
+}
+.score-ring.high { background: conic-gradient(var(--green-500) var(--p), #E5E7EB 0); color: var(--green-500); }
+.score-ring.mid { background: conic-gradient(var(--amber-500) var(--p), #E5E7EB 0); color: #92400E; }
+.score-ring.low { background: conic-gradient(var(--red-500) var(--p), #E5E7EB 0); color: var(--red-500); }
+.score-ring::before {
+  content: '';
+  position: absolute;
+  width: 34px; height: 34px;
+  background: #fff;
+  border-radius: 50%;
+}
+.score-ring span { position: relative; z-index: 1; }
+
+.tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tag.green { background: var(--green-100); color: #065F46; }
+.tag.amber { background: var(--amber-100); color: #92400E; }
+.tag.red { background: var(--red-100); color: #991B1B; }
+.tag.blue { background: var(--blue-100); color: #1E40AF; }
+.tag.navy { background: var(--navy-800); color: #fff; }
+
+.growth-up { color: var(--green-500); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.growth-down { color: var(--red-500); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+/* ===== 图表容器 ===== */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.chart-container {
+  width: 100%;
+  min-height: 320px;
+}
+.chart-container.small { min-height: 280px; }
+
+/* ===== 痛点模块 ===== */
+.pain-dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.pain-dim-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--bg-50);
+}
+.pain-dim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.pain-dim-name { font-size: 13px; font-weight: 600; color: var(--navy-900); }
+.pain-dim-count { font-size: 11px; color: var(--red-500); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.pain-bar {
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.pain-bar-fill {
+  height: 100%;
+  background: var(--red-500);
+  border-radius: 3px;
+}
+.pain-top-item {
+  font-size: 11px;
+  color: var(--text-700);
+  line-height: 1.4;
+}
+
+.review-list { max-height: 400px; overflow-y: auto; }
+.review-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.review-item:last-child { border-bottom: none; }
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.review-stars { color: var(--amber-500); font-size: 12px; letter-spacing: 1px; }
+.review-meta { font-size: 11px; color: var(--text-500); }
+.review-text {
+  font-size: 13px;
+  color: var(--text-700);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.review-text-en { color: var(--text-700); }
+.review-text-zh { color: var(--text-500); font-size: 12px; border-left: 2px solid var(--border); padding-left: 10px; margin-top: 4px; }
+.review-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.improvement-list { display: flex; flex-direction: column; gap: 12px; }
+.improvement-item {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+.improvement-priority {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.improvement-priority.p1 { background: var(--red-100); color: var(--red-500); }
+.improvement-priority.p2 { background: var(--amber-100); color: #92400E; }
+.improvement-priority.p3 { background: var(--blue-100); color: var(--blue-500); }
+.improvement-content { flex: 1; }
+.improvement-title { font-size: 13px; font-weight: 600; color: var(--navy-900); margin-bottom: 4px; }
+.improvement-desc { font-size: 12px; color: var(--text-500); line-height: 1.5; margin-bottom: 6px; }
+.improvement-meta { display: flex; gap: 16px; font-size: 11px; color: var(--text-500); }
+.improvement-meta span strong { color: var(--green-500); font-weight: 600; }
+
+/* ===== 时间线 ===== */
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 8px; bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 20px;
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot {
+  position: absolute;
+  left: -30px;
+  top: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--amber-500);
+}
+.timeline-item.done .timeline-dot { background: var(--green-500); border-color: var(--green-500); }
+.timeline-item.current .timeline-dot {
+  background: var(--amber-500);
+  box-shadow: 0 0 0 4px var(--amber-100);
+}
+.timeline-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy-900);
+  margin-bottom: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.timeline-title { font-size: 13px; font-weight: 600; color: var(--text-900); margin-bottom: 2px; }
+.timeline-desc { font-size: 12px; color: var(--text-500); line-height: 1.5; }
+
+/* ===== 两列布局 ===== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ===== 利润计算器 ===== */
+.calc-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-700);
+  margin-bottom: 6px;
+}
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+}
+.form-group input:focus { border-color: var(--amber-500); }
+.calc-result {
+  background: var(--navy-800);
+  color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+}
+.calc-result-title {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+.calc-result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.calc-result-item .label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+}
+.calc-result-item .value {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+}
+.calc-result-item .value.green { color: var(--green-500); }
+.calc-result-item .value.amber { color: var(--amber-400); }
+
+/* ===== 产品详情弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10, 31, 51, 0.6);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+.modal-title { font-size: 18px; font-weight: 700; color: var(--navy-900); }
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  color: var(--text-500);
+}
+.modal-close:hover { background: var(--bg-50); }
+.modal-body { padding: 24px; }
+
+/* ===== 滚动条 ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D4D4D4; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #A3A3A3; }
+
+/* ===== Toast 提示 ===== */
+.toast {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  background: var(--navy-900);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 9999;
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  max-width: 320px;
+}
+.toast.show { transform: translateX(0); }
+.toast.success { background: var(--green-500); }
+.toast.warning { background: var(--amber-500); color: var(--navy-900); }
+.toast.error { background: var(--red-500); }
+
+/* ===== 报告弹窗 ===== */
+.report-content {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-700);
+}
+.report-content h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy-900);
+  margin: 16px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--amber-500);
+}
+.report-content h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy-800);
+  margin: 12px 0 6px;
+}
+.report-content p { margin-bottom: 8px; }
+.report-content ul { padding-left: 20px; margin-bottom: 10px; }
+.report-content li { margin-bottom: 4px; }
+.report-highlight {
+  background: var(--amber-100);
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--amber-500);
+  margin: 10px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-title">
+        <div class="logo-mark">H</div>
+        <span>HotPick AI</span>
+      </div>
+      <div class="logo-sub">全球跨境爆品预测系统</div>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-title">核心功能</div>
+      <div class="nav-item active" data-view="prediction">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        爆品预测中心
+      </div>
+      <div class="nav-item" data-view="pain">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        痛点反向拆解
+      </div>
+      <div class="nav-item" data-view="trend">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        趋势追踪看板
+      </div>
+      <div class="nav-group-title">辅助工具</div>
+      <div class="nav-item" data-view="competitor">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        竞品深度分析
+      </div>
+      <div class="nav-item" data-view="profit">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        利润测算工具
+      </div>
+      <div class="nav-item" data-view="combo">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/></svg>
+        选品组合推荐
+      </div>
+      <div class="nav-group-title">运营赋能</div>
+      <div class="nav-item" data-view="keyword">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        关键词研究中心
+      </div>
+      <div class="nav-item" data-view="supply">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        供应链货源匹配
+      </div>
+      <div class="nav-item" data-view="inventory">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-3a2 2 0 0 1-2-2V2"/><path d="M9 18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1"/><path d="M9 22V12h6v10"/></svg>
+        库存备货预测
+      </div>
+      <div class="nav-item" data-view="listing">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Listing优化助手
+      </div>
+      <div class="nav-item" data-view="compliance">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        合规风险检测
+      </div>
+      <div class="nav-item" data-view="multisite">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        跨站点机会对比
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="data-update-time">
+        <div class="update-dot"></div>
+        <span>数据实时更新 · 2026-09-05 10:30</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== 主内容区 ===== -->
+  <main class="main-content">
+    <!-- 顶部栏 -->
+    <header class="topbar">
+      <div>
+        <span class="page-title" id="pageTitle">爆品预测中心</span>
+      </div>
+      <div class="topbar-filters">
+        <span class="filter-label">地区</span>
+        <select class="filter-select" id="regionSelect">
+          <option>美国</option><option>加拿大</option><option>英国</option>
+          <option>德国</option><option>法国</option><option>日本</option>
+          <option>东南亚</option><option>中东</option>
+        </select>
+        <span class="filter-label">平台</span>
+        <select class="filter-select" id="platformSelect">
+          <option>Amazon</option><option>TikTok Shop</option><option>TEMU</option>
+          <option>SHEIN</option><option>eBay</option><option>Shopify</option>
+        </select>
+        <span class="filter-label">时间节点</span>
+        <select class="filter-select" id="eventSelect">
+          <option>万圣节 2026</option><option>黑五网一 2026</option>
+          <option>圣诞节 2026</option><option>情人节 2027</option>
+          <option>返校季 2026</option><option>实时飙升趋势</option>
+        </select>
+        <button class="btn primary" id="regenerateBtn" onclick="regenerateData()" style="padding: 8px 18px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 14px;">🔄</span> 重新生成分析
+        </button>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <!-- ===== 视图1：爆品预测中心 ===== -->
+      <section class="view active" id="view-prediction">
+        <!-- KPI -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">预测潜力爆品数</div>
+            <div class="kpi-value">128<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend up">↑ 较上周新增 23 个</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">平均机会分数</div>
+            <div class="kpi-value">76.4<span class="kpi-unit">/100</span></div>
+            <div class="kpi-trend up">↑ 同比提升 8.2%</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">高增长品类数</div>
+            <div class="kpi-value">17<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend up">↑ 搜索增速 > 200%</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">低竞争蓝海赛道</div>
+            <div class="kpi-value">42<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend down">↓ 竞品数 < 50</div>
+          </div>
+        </div>
+
+        <!-- 趋势概览图表 -->
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">万圣节品类搜索热度趋势 <span class="card-title-badge">未来90天预测</span></div>
+            </div>
+            <div class="card-body">
+              <div id="trendChart" class="chart-container"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">品类机会分布</div>
+            </div>
+            <div class="card-body">
+              <div id="categoryChart" class="chart-container small"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 爆品榜单 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">潜力爆品榜单 <span class="card-title-badge">按机会分数排序</span></div>
+            <div class="card-actions">
+              <button class="btn">导出榜单</button>
+              <button class="btn primary">一键生成选品报告</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">机会分</th>
+                  <th>产品名称</th>
+                  <th>搜索增长率</th>
+                  <th>竞品数量</th>
+                  <th>预估客单价</th>
+                  <th>利润空间</th>
+                  <th>进入门槛</th>
+                  <th>核心痛点</th>
+                  <th style="width: 80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图2：痛点反向拆解 ===== -->
+      <section class="view" id="view-pain">
+        <div class="kpi-grid">
+          <div class="kpi-card red">
+            <div class="kpi-label">已识别痛点总数</div>
+            <div class="kpi-value">1,847<span class="kpi-unit">条</span></div>
+            <div class="kpi-trend up">↑ 本周新增 312 条</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">行业共性痛点</div>
+            <div class="kpi-value">23<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend">差评占比 > 20%</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">高价值改进机会</div>
+            <div class="kpi-value">15<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend up">↑ 用户付费意愿强</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">痛点识别准确率</div>
+            <div class="kpi-value">92.3<span class="kpi-unit">%</span></div>
+            <div class="kpi-trend up">↑ 五维交叉验证</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">六大维度痛点热力分布 <span class="card-title-badge">万圣节装饰品类</span></div>
+            <div class="card-actions">
+              <select class="filter-select" id="painCategorySelect">
+                <option>装饰类</option><option>服饰类</option><option>派对类</option><option>宠物类</option>
+              </select>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="pain-dimension-grid" id="painDimensionGrid"></div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">高频差评原文库 <span class="card-title-badge">中英对照</span></div>
+            </div>
+            <div class="card-body">
+              <div class="review-list" id="reviewList"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">产品改进建议 <span class="card-title-badge">按优先级排序</span></div>
+            </div>
+            <div class="card-body">
+              <div class="improvement-list" id="improvementList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图3：趋势追踪看板 ===== -->
+      <section class="view" id="view-trend">
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-header"><div class="card-title">关键词搜索量走势（近90天）</div></div>
+            <div class="card-body"><div id="keywordTrendChart" class="chart-container"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">供需比变化曲线</div></div>
+            <div class="card-body"><div id="supplyDemandChart" class="chart-container small"></div></div>
+          </div>
+        </div>
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-header"><div class="card-title">平台销量分布对比</div></div>
+            <div class="card-body"><div id="platformSalesChart" class="chart-container small"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">价格带分布</div></div>
+            <div class="card-body"><div id="priceRangeChart" class="chart-container small"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图4：竞品分析 ===== -->
+      <section class="view" id="view-competitor">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Top5 竞品缺陷对标 <span class="card-title-badge">LED南瓜灯品类</span></div>
+          </div>
+          <div class="card-body">
+            <div id="competitorRadarChart" class="chart-container" style="min-height: 400px;"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">竞品价格与排名波动追踪</div></div>
+          <div class="card-body"><div id="competitorTrendChart" class="chart-container"></div></div>
+        </div>
+      </section>
+
+      <!-- ===== 视图5：利润测算 ===== -->
+      <section class="view" id="view-profit">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">成本参数输入</div></div>
+            <div class="card-body">
+              <div class="calc-form">
+                <div class="form-group">
+                  <label>采购成本（元）</label>
+                  <input type="number" id="costInput" value="18.5">
+                </div>
+                <div class="form-group">
+                  <label>售价（美元）</label>
+                  <input type="number" id="priceInput" value="24.99">
+                </div>
+                <div class="form-group">
+                  <label>头程物流（元/件）</label>
+                  <input type="number" id="logisticsInput" value="6.2">
+                </div>
+                <div class="form-group">
+                  <label>平台佣金率（%）</label>
+                  <input type="number" id="commissionInput" value="15">
+                </div>
+                <div class="form-group">
+                  <label>广告CPC（美元）</label>
+                  <input type="number" id="cpcInput" value="0.85">
+                </div>
+                <div class="form-group">
+                  <label>广告转化率（%）</label>
+                  <input type="number" id="conversionInput" value="12">
+                </div>
+              </div>
+              <button class="btn primary" onclick="calculateProfit()">开始测算</button>
+            </div>
+          </div>
+          <div class="calc-result">
+            <div class="calc-result-title">利润测算结果</div>
+            <div class="calc-result-grid">
+              <div class="calc-result-item">
+                <div class="label">单件净利润</div>
+                <div class="value green" id="netProfit">$8.42</div>
+              </div>
+              <div class="calc-result-item">
+                <div class="label">ROI</div>
+                <div class="value amber" id="roiValue">126%</div>
+              </div>
+              <div class="calc-result-item">
+                <div class="label">保本销量</div>
+                <div class="value" id="breakEven">327件</div>
+              </div>
+            </div>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 12px;">成本结构拆解</div>
+              <div id="costBreakdownChart" style="width: 100%; height: 180px;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图6：选品组合 ===== -->
+      <section class="view" id="view-combo">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">万圣节选品组合推荐 <span class="card-title-badge">节日款+通用款搭配</span></div>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;" id="comboList"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">运营时间线规划 <span class="card-title-badge">倒推备货节奏</span></div></div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-08-01 · 已完成</div>
+                <div class="timeline-title">选品开发与样品确认</div>
+                <div class="timeline-desc">完成潜力品类筛选、供应商打样、痛点改良方案确认</div>
+              </div>
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-09-01 · 进行中</div>
+                <div class="timeline-title">大货生产与备货入仓</div>
+                <div class="timeline-desc">首批备货5000件发往FBA仓，确保10月初全部上架可售</div>
+              </div>
+              <div class="timeline-item current">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-09-15 · 即将开始</div>
+                <div class="timeline-title">Listing埋词与测款</div>
+                <div class="timeline-desc">基于痛点关键词优化Listing，启动小预算广告测试转化率</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-10-01</div>
+                <div class="timeline-title">旺季冲排名阶段</div>
+                <div class="timeline-desc">加大广告投入，目标进入品类BSR Top50，CPC预算提升至$150/天</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-10-20 ~ 10-31</div>
+                <div class="timeline-title">爆发收割期</div>
+                <div class="timeline-desc">万圣节前两周流量高峰，保持库存充足，价格微调最大化利润</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-11-07</div>
+                <div class="timeline-title">节后清仓策略</div>
+                <div class="timeline-desc">启动折扣清仓，剩余库存捆绑销售或转入下一年度备货计划</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图7：关键词研究中心 ===== -->
+      <section class="view" id="view-keyword">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">相关关键词总数</div>
+            <div class="kpi-value">2,847<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend up">↑ 本月新增 312 个</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">高搜索低竞争词</div>
+            <div class="kpi-value">186<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend">搜索量 > 1000 且竞品 < 50</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">长尾关键词</div>
+            <div class="kpi-value">1,423<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend up">↑ 转化率高出 2.3 倍</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">平均CPC</div>
+            <div class="kpi-value">$0.85<span class="kpi-unit"></span></div>
+            <div class="kpi-trend down">↓ 较上月降低 12%</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">关键词挖掘结果 <span class="card-title-badge">万圣节装饰品类</span></div>
+            <div class="card-actions">
+              <button class="btn">导出关键词表</button>
+              <button class="btn primary">一键生成Listing埋词</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th>关键词</th>
+                  <th>月搜索量</th>
+                  <th>搜索趋势</th>
+                  <th>竞品数</th>
+                  <th>CPC</th>
+                  <th>转化率</th>
+                  <th>竞争度</th>
+                  <th>推荐等级</th>
+                </tr>
+              </thead>
+              <tbody id="keywordTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-header"><div class="card-title">关键词搜索量分布</div></div>
+            <div class="card-body"><div id="keywordDistChart" class="chart-container small"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">竞品流量词结构</div></div>
+            <div class="card-body"><div id="trafficSourceChart" class="chart-container small"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图8：供应链货源匹配 ===== -->
+      <section class="view" id="view-supply">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">匹配供应商数</div>
+            <div class="kpi-value">127<span class="kpi-unit">家</span></div>
+            <div class="kpi-trend up">↑ 1688+工厂直供</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">平均采购价</div>
+            <div class="kpi-value">¥16.8<span class="kpi-unit"></span></div>
+            <div class="kpi-trend down">↓ 较市场价低 18%</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">最低MOQ</div>
+            <div class="kpi-value">100<span class="kpi-unit">件</span></div>
+            <div class="kpi-trend">支持小批量试单</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">平均交期</div>
+            <div class="kpi-value">12<span class="kpi-unit">天</span></div>
+            <div class="kpi-trend">加急可7天出货</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">1688货源匹配结果 <span class="card-title-badge">LED南瓜灯</span></div>
+            <div class="card-actions">
+              <button class="btn">一键比价</button>
+              <button class="btn primary">导出供应商清单</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th>供应商</th>
+                  <th>采购价</th>
+                  <th>MOQ</th>
+                  <th>交期</th>
+                  <th>工厂评分</th>
+                  <th>复购率</th>
+                  <th>支持定制</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="supplierTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">采购成本结构分析</div></div>
+            <div class="card-body"><div id="costStructureChart" class="chart-container small"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">不同采购量阶梯报价</div></div>
+            <div class="card-body"><div id="tierPriceChart" class="chart-container small"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图9：库存备货预测 ===== -->
+      <section class="view" id="view-inventory">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">建议首批备货量</div>
+            <div class="kpi-value">3,200<span class="kpi-unit">件</span></div>
+            <div class="kpi-trend">基于90天销量预测</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">预计售罄率</div>
+            <div class="kpi-value">94<span class="kpi-unit">%</span></div>
+            <div class="kpi-trend up">↑ 库存周转健康</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">最佳补货时间</div>
+            <div class="kpi-value">10/15<span class="kpi-unit"></span></div>
+            <div class="kpi-trend">避免断货影响排名</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">滞销风险等级</div>
+            <div class="kpi-value">低<span class="kpi-unit"></span></div>
+            <div class="kpi-trend">节后剩余库存 < 8%</div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card">
+            <div class="card-header"><div class="card-title">未来90天销量与库存预测</div></div>
+            <div class="card-body"><div id="inventoryForecastChart" class="chart-container"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">备货方案对比</div></div>
+            <div class="card-body">
+              <div id="inventoryPlanList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">库存预警时间线</div></div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-09-01 · 已完成</div>
+                <div class="timeline-title">首批备货入仓</div>
+                <div class="timeline-desc">3200件已全部入FBA仓，可售库存充足</div>
+              </div>
+              <div class="timeline-item current">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-10-05 · 预警</div>
+                <div class="timeline-title">库存消耗达50%</div>
+                <div class="timeline-desc">预计此时库存剩余1600件，需启动补货决策</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-10-15 · 补货截止</div>
+                <div class="timeline-title">最晚补货下单时间</div>
+                <div class="timeline-desc">考虑12天生产+15天头程，必须在此日期前下单才能在断货前入仓</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-10-25 · 高峰</div>
+                <div class="timeline-title">万圣节前销售高峰</div>
+                <div class="timeline-desc">预计日出单量达150+件，库存需至少保持7天安全库存</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">2026-11-05 · 清仓</div>
+                <div class="timeline-title">节后清仓启动</div>
+                <div class="timeline-desc">剩余库存预计约200件，启动20%折扣清仓，避免长期仓储费</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图10：Listing优化助手 ===== -->
+      <section class="view" id="view-listing">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">AI Listing 生成 <span class="card-title-badge">基于痛点关键词</span></div>
+            </div>
+            <div class="card-body">
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">产品名称</label>
+                <input type="text" class="filter-select" style="width: 100%;" value="可充电LED南瓜灯（遥控款）" readonly>
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">核心卖点（从痛点反向推导）</label>
+                <div style="background: var(--green-100); padding: 12px; border-radius: 6px; font-size: 12px; color: #065F46; line-height: 1.8;">
+                  ✓ 1200mAh可充电电池，续航长达12小时<br>
+                  ✓ 800流明高亮，户外30米清晰可见<br>
+                  ✓ 30米远程遥控，支持8种灯光模式<br>
+                  ✓ IP65防水，适合户外庭院装饰<br>
+                  ✓ 通过UL安全认证，儿童使用无忧
+                </div>
+              </div>
+              <button class="btn primary" style="width: 100%;" onclick="generateListing()">生成优化版Listing</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">优化结果 <span class="card-title-badge">关键词覆盖率 92%</span></div>
+            </div>
+            <div class="card-body" id="listingResult" style="font-size: 13px; line-height: 1.7;">
+              <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; color: var(--navy-900); margin-bottom: 6px;">标题（200字符）</div>
+                <div style="background: var(--bg-50); padding: 12px; border-radius: 6px; color: var(--text-700);">
+                  Halloween LED Pumpkin Lights, Rechargeable 1200mAh Jack O Lantern with Remote, 8 Modes 800LM Bright Waterproof Outdoor Decorations for Yard Porch Party
+                </div>
+              </div>
+              <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; color: var(--navy-900); margin-bottom: 6px;">五点描述</div>
+                <div style="background: var(--bg-50); padding: 12px; border-radius: 6px; color: var(--text-700); font-size: 12px; line-height: 1.8;">
+                  <strong>超长续航</strong>：内置1200mAh可充电电池，一次充电可持续亮12小时，告别频繁更换电池的烦恼<br>
+                  <strong>超亮户外可见</strong>：800流明高亮度，30米外清晰可见，完美适配庭院、门廊、派对装饰<br>
+                  <strong>远程遥控</strong>：配备30米有效距离遥控器，支持8种灯光模式切换，无需出门即可控制<br>
+                  <strong>防水耐用</strong>：IP65级防水设计，雨天户外使用无忧，ABS材质抗摔耐用<br>
+                  <strong>安全认证</strong>：通过UL安全认证，无小部件脱落风险，儿童家庭可放心使用
+                </div>
+              </div>
+              <div>
+                <div style="font-weight: 700; color: var(--navy-900); margin-bottom: 6px;">Search Terms（250字节）</div>
+                <div style="background: var(--bg-50); padding: 12px; border-radius: 6px; color: var(--text-700); font-size: 12px; font-family: 'JetBrains Mono', monospace;">
+                  halloween decor outdoor pumpkin lights rechargeable led jack o lantern remote control waterproof yard decoration party supplies 2026
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">关键词埋词覆盖检测</div></div>
+          <div class="card-body"><div id="keywordCoverageChart" class="chart-container" style="min-height: 280px;"></div></div>
+        </div>
+      </section>
+
+      <!-- ===== 视图11：合规风险检测 ===== -->
+      <section class="view" id="view-compliance">
+        <div class="kpi-grid">
+          <div class="kpi-card green">
+            <div class="kpi-label">整体合规评分</div>
+            <div class="kpi-value">86<span class="kpi-unit">/100</span></div>
+            <div class="kpi-trend">低风险，可正常销售</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">必需认证项</div>
+            <div class="kpi-value">4<span class="kpi-unit">项</span></div>
+            <div class="kpi-trend">已完成3项，1项待办</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">专利风险</div>
+            <div class="kpi-value">2<span class="kpi-unit">项</span></div>
+            <div class="kpi-trend">需规避外观设计专利</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">侵权预警</div>
+            <div class="kpi-value">0<span class="kpi-unit">项</span></div>
+            <div class="kpi-trend">无商标/版权侵权风险</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">认证要求清单 <span class="card-title-badge">美国站 · 儿童相关产品</span></div></div>
+            <div class="card-body">
+              <div id="certList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">专利风险提示</div></div>
+            <div class="card-body">
+              <div id="patentList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">各国合规要求对比</div></div>
+          <div class="card-body" style="padding: 0;">
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th>国家/地区</th>
+                  <th>强制认证</th>
+                  <th>标签要求</th>
+                  <th>材质限制</th>
+                  <th>关税税率</th>
+                  <th>风险等级</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>美国</strong></td>
+                  <td>CPC认证、UL测试、CPSIA</td>
+                  <td>英文警告语、产地标、追踪标签</td>
+                  <td>铅含量<90ppm、邻苯二甲酸盐限制</td>
+                  <td class="mono">25%</td>
+                  <td><span class="tag amber">中风险</span></td>
+                </tr>
+                <tr>
+                  <td><strong>欧盟</strong></td>
+                  <td>CE认证、ROHS、REACH</td>
+                  <td>CE标志、多语言说明书、WEEE标识</td>
+                  <td>6种邻苯限制、电池指令合规</td>
+                  <td class="mono">19%</td>
+                  <td><span class="tag red">高风险</span></td>
+                </tr>
+                <tr>
+                  <td><strong>英国</strong></td>
+                  <td>UKCA认证、BS标准</td>
+                  <td>UKCA标志、英文说明书</td>
+                  <td>同欧盟REACH要求</td>
+                  <td class="mono">20%</td>
+                  <td><span class="tag amber">中风险</span></td>
+                </tr>
+                <tr>
+                  <td><strong>日本</strong></td>
+                  <td>PSE认证、ST玩具认证</td>
+                  <td>日文标签、进口商信息</td>
+                  <td>食品卫生法适用（接触类）</td>
+                  <td class="mono">10%</td>
+                  <td><span class="tag green">低风险</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图12：跨站点机会对比 ===== -->
+      <section class="view" id="view-multisite">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">可进入站点数</div>
+            <div class="kpi-value">8<span class="kpi-unit">个</span></div>
+            <div class="kpi-trend">全球主流电商市场</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">最佳推荐站点</div>
+            <div class="kpi-value">美国<span class="kpi-unit"></span></div>
+            <div class="kpi-trend">机会分 92，市场容量最大</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">蓝海机会站点</div>
+            <div class="kpi-value">加拿大<span class="kpi-unit"></span></div>
+            <div class="kpi-trend">竞争度低，利润空间高</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">需谨慎站点</div>
+            <div class="kpi-value">德国<span class="kpi-unit"></span></div>
+            <div class="kpi-trend">合规要求高，竞争激烈</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">各站点机会维度对比 <span class="card-title-badge">LED南瓜灯品类</span></div></div>
+          <div class="card-body"><div id="multisiteRadarChart" class="chart-container" style="min-height: 400px;"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">站点详细数据对比</div></div>
+          <div class="card-body" style="padding: 0;">
+            <table class="product-table">
+              <thead>
+                <tr>
+                  <th>站点</th>
+                  <th>月搜索量</th>
+                  <th>竞品数</th>
+                  <th>平均售价</th>
+                  <th>平均评分</th>
+                  <th>供需比</th>
+                  <th>预估月销</th>
+                  <th>机会分</th>
+                  <th>推荐等级</th>
+                </tr>
+              </thead>
+              <tbody id="multisiteTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- ===== 产品详情弹窗 ===== -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalProductName">产品详情</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ===== Toast 提示 ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 动态数据集生成器 =====
+// 根据时间节点、平台、地区生成对应真实场景数据
+let currentData = null;
+
+function generateDataset(event, platform, region) {
+  // 平台系数调整
+  const platformFactor = {
+    'Amazon': { priceMul: 1.2, profitMul: 1.0, compMul: 1.0, cpcMul: 1.0 },
+    'TikTok Shop': { priceMul: 0.8, profitMul: 0.85, compMul: 0.7, cpcMul: 0.6 },
+    'TEMU': { priceMul: 0.5, profitMul: 0.6, compMul: 1.5, cpcMul: 0.3 },
+    'SHEIN': { priceMul: 0.65, profitMul: 0.75, compMul: 1.2, cpcMul: 0.5 },
+    'eBay': { priceMul: 1.1, profitMul: 0.95, compMul: 0.8, cpcMul: 0.9 },
+    'Shopify': { priceMul: 1.3, profitMul: 1.1, compMul: 0.5, cpcMul: 1.2 }
+  }[platform] || { priceMul: 1, profitMul: 1, compMul: 1, cpcMul: 1 };
+
+  // 地区系数调整
+  const regionFactor = {
+    '美国': { priceMul: 1.1, volumeMul: 1.5, compMul: 1.3 },
+    '加拿大': { priceMul: 1.15, volumeMul: 0.4, compMul: 0.5 },
+    '英国': { priceMul: 1.05, volumeMul: 0.5, compMul: 0.7 },
+    '德国': { priceMul: 1.0, volumeMul: 0.45, compMul: 0.8 },
+    '法国': { priceMul: 1.0, volumeMul: 0.35, compMul: 0.6 },
+    '日本': { priceMul: 1.2, volumeMul: 0.3, compMul: 0.4 },
+    '东南亚': { priceMul: 0.6, volumeMul: 0.6, compMul: 0.5 },
+    '中东': { priceMul: 1.1, volumeMul: 0.25, compMul: 0.3 }
+  }[region] || { priceMul: 1, volumeMul: 1, compMul: 1 };
+
+  const pf = platformFactor;
+  const rf = regionFactor;
+  const adjPrice = p => '$' + (parseFloat(p.replace('$','')) * pf.priceMul * rf.priceMul).toFixed(2);
+  const adjProfit = p => Math.min(85, Math.max(20, parseInt(p) * pf.profitMul)) + '%';
+  const adjComp = c => Math.max(10, Math.round(c * pf.compMul * rf.compMul));
+  const adjVol = v => Math.round(v * rf.volumeMul);
+
+  // ===== 各时间节点核心数据集 =====
+  const datasets = {
+    '万圣节 2026': {
+      kpi: { products: 128, avgScore: 76.4, highGrowth: 17, blueOcean: 42, painTotal: 1847, commonPain: 23, improve: 15, accuracy: 92.3 },
+      products: [
+        { id: 1, name: '可充电LED南瓜灯（遥控款）', category: '装饰类 · 户外装饰', score: 92, growth: 342, competitors: 87, price: '$24.99', profit: '42%', threshold: '中', pain: '续航短、亮度不足', painDetails: ['LED续航仅4-6小时', '亮度不够户外可见度差', '遥控器距离短易失灵'], improve: '可充电大容量电池、800流明高亮、30米遥控' },
+        { id: 2, name: '宠物蝙蝠翅膀变装服', category: '宠物类 · 节日服饰', score: 89, growth: 287, competitors: 42, price: '$16.99', profit: '58%', threshold: '低', pain: '尺码不准、材质硬', painDetails: ['尺码表偏差大，大型犬不合身', '材质偏硬磨宠物皮肤', '魔术贴不牢固易脱落'], improve: '精准尺码表、柔软短毛绒面料、加固魔术贴' },
+        { id: 3, name: '免打孔万圣节窗贴（静电款）', category: '装饰类 · 室内装饰', score: 86, growth: 215, competitors: 156, price: '$12.99', profit: '65%', threshold: '低', pain: '胶贴残留、图案模糊', painDetails: ['普通胶贴损伤墙面残留胶渍', '印刷模糊色彩不鲜艳', '尺寸偏小覆盖面积不足'], improve: '静电吸附无残留、高清印刷、加大尺寸套装' },
+        { id: 4, name: '儿童安全发光女巫帽', category: '服饰类 · 儿童配饰', score: 84, growth: 198, competitors: 203, price: '$14.99', profit: '51%', threshold: '中', pain: '面料薄透、灯易坏', painDetails: ['面料太薄透光度差', 'LED灯珠容易脱落损坏', '头围尺寸不适合低龄儿童'], improve: '加厚毛毡面料、加固灯珠、可调节头围' },
+        { id: 5, name: '万圣节主题一次性餐具套装', category: '派对类 · 派对用品', score: 81, growth: 176, competitors: 312, price: '$18.99', profit: '48%', threshold: '低', pain: '易变形、不环保', painDetails: ['纸盘薄软盛食物易变形', '一次性用品不环保被投诉', '套装件数不够多人使用'], improve: '加厚可降解材质、8人份大容量、增加杯盘勺全套' },
+        { id: 6, name: '仿真蜘蛛网装饰（超大款）', category: '装饰类 · 户外装饰', score: 79, growth: 164, competitors: 178, price: '$19.99', profit: '55%', threshold: '低', pain: '材质易断、固定困难', painDetails: ['棉线材质容易扯断', '户外固定没有配套配件', '蜘蛛配件太少不够逼真'], improve: '高弹尼龙材质、配套地钉挂钩、增加仿真蜘蛛数量' },
+        { id: 7, name: '亲子款万圣节家居服套装', category: '服饰类 · 家居服饰', score: 77, growth: 143, competitors: 95, price: '$32.99', profit: '45%', threshold: '中', pain: '起球、色差大', painDetails: ['面料洗后起球严重', '实物与图片色差明显', '成人款尺码偏小'], improve: '精梳棉抗起球面料、实物拍摄校准、标准美码尺寸' },
+        { id: 8, name: '南瓜造型硅胶烘焙模具', category: '派对类 · 烘焙工具', score: 74, growth: 128, competitors: 245, price: '$11.99', profit: '52%', threshold: '低', pain: '脱模困难、有异味', painDetails: ['硅胶太软脱模容易破', '新模具有刺鼻塑料味', '模具太浅容量小'], improve: '加厚硬挺硅胶、食品级无异味、加深大容量设计' },
+      ],
+      painDimensions: [
+        { name: '产品质量', count: 687, percent: 85, top: '面料薄透易破损、LED灯易坏、缝线粗糙开线' },
+        { name: '功能体验', count: 542, percent: 72, top: '续航时间短、亮度不足、遥控距离短' },
+        { name: '规格适配', count: 415, percent: 65, top: '尺码标注偏差大、尺寸偏小、头围不合适' },
+        { name: '场景适配', count: 298, percent: 48, top: '户外不防水、固定困难、覆盖面积不足' },
+        { name: '包装物流', count: 186, percent: 32, top: '运输挤压变形、配件缺失、包装简陋' },
+        { name: '合规安全', count: 153, percent: 28, top: '小部件易脱落、材质有异味、无阻燃认证' },
+      ],
+      reviews: [
+        { stars: 2, date: '2026-08-15', product: 'LED南瓜灯', text: 'The lights only lasted 4 hours before dying, and the remote only works if you are within 3 feet. Very disappointed for outdoor use.', textZh: '灯只用了4小时就没电了，遥控器必须在3英尺内才管用。户外用太让人失望了。', tags: ['续航短', '遥控差', '产品质量'] },
+        { stars: 1, date: '2026-08-12', product: '儿童女巫帽', text: 'Cheap thin fabric, the LED fell off after one wear. My 5 year old couldnt even wear it because the head opening was too small.', textZh: '面料又薄又廉价，戴一次LED灯就掉了。我5岁孩子头围都套不进去，开口太小。', tags: ['面料差', '尺寸小', '安全隐患'] },
+        { stars: 2, date: '2026-08-10', product: '宠物变装服', text: 'Size chart is way off. I ordered XL for my 40lb dog and it barely fit his neck. The material is stiff and scratchy.', textZh: '尺码表完全不准。我家40磅的狗买XL，脖子都勉强套上。材质又硬又扎。', tags: ['尺码不准', '材质硬', '规格适配'] },
+        { stars: 3, date: '2026-08-08', product: '万圣节窗贴', text: 'Left sticky residue all over my windows! Took me an hour to clean. The designs are cute but not worth the hassle.', textZh: '窗户上留了好多胶渍！我擦了一个小时。图案挺可爱但太麻烦了。', tags: ['胶贴残留', '包装物流', '场景适配'] },
+        { stars: 1, date: '2026-08-05', product: '烘焙模具', text: 'Strong chemical smell when I opened it. Even after washing 3 times the smell didnt go away. Not safe for food.', textZh: '打开有很重的化学味，洗了3次还是有味。接触食物不安全。', tags: ['有异味', '合规安全', '产品质量'] },
+        { stars: 2, date: '2026-08-02', product: '纸盘套装', text: 'Plates are so flimsy they bend when you put food on them. Had to use two plates at a time. Not worth the money.', textZh: '纸盘太软了，放食物就弯。得用两个叠一起。不值这个价。', tags: ['易变形', '产品质量', '功能体验'] },
+      ],
+      improvements: [
+        { priority: 'p1', title: '升级可充电大容量电池', desc: '将一次性电池改为1200mAh可充电锂电池，续航从4小时提升至12小时，支持Type-C充电', cost: '成本增加 ¥3.2/件', willingness: '用户愿意多付 $3-5' },
+        { priority: 'p1', title: '精准尺码表+实拍参考', desc: '提供英寸/厘米双单位尺码表，增加不同体重宠物试穿参考图，降低退货率', cost: '成本增加 ¥0.5/件', willingness: '退货率可降低 40%' },
+        { priority: 'p2', title: '静电吸附无胶窗贴', desc: '改用静电PVC材质，可反复粘贴不留残胶，解决用户最大的安装痛点', cost: '成本增加 ¥1.8/件', willingness: '用户愿意多付 $2-3' },
+        { priority: 'p2', title: '儿童安全加固设计', desc: '灯珠采用缝线加固而非胶水粘合，通过CPC认证，小部件拉力测试达标', cost: '成本增加 ¥2.5/件', willingness: '家长用户付费意愿强' },
+        { priority: 'p3', title: '可降解环保材质', desc: '餐具采用可降解甘蔗浆材质，迎合欧美环保消费趋势，可作为核心卖点', cost: '成本增加 ¥1.2/件', willingness: '环保标签溢价 15%' },
+      ],
+      combos: [
+        { name: '户外装饰组合', items: ['LED南瓜灯×2', '超大蜘蛛网×1', '地钉固定套装×1'], price: '$49.99', profit: '52%', reason: '一站式解决户外装饰需求，客单价提升80%' },
+        { name: '亲子派对组合', items: ['儿童女巫帽×1', '成人家居服×1', '主题餐具×1套'], price: '$59.99', profit: '48%', reason: '覆盖家庭用户全场景，降低单一品类滞销风险' },
+        { name: '宠物主人组合', items: ['宠物变装服×1', '主人同款配饰×1', '拍照背景布×1'], price: '$36.99', profit: '56%', reason: 'TikTok热门晒宠场景，社交传播属性强' },
+      ],
+      keywords: [
+        { word: 'halloween decorations outdoor', volume: 45200, trend: 342, competitors: 1200, cpc: 1.25, conversion: 8.5, competition: '高', recommend: '核心词' },
+        { word: 'led pumpkin lights rechargeable', volume: 18600, trend: 428, competitors: 187, cpc: 0.68, conversion: 14.2, competition: '低', recommend: '必埋词' },
+        { word: 'jack o lantern with remote', volume: 12400, trend: 285, competitors: 245, cpc: 0.72, conversion: 12.8, competition: '低', recommend: '必埋词' },
+        { word: 'waterproof halloween lights', volume: 9800, trend: 198, competitors: 320, cpc: 0.85, conversion: 10.5, competition: '中', recommend: '推荐' },
+        { word: 'halloween pumpkin decor 2026', volume: 7600, trend: 512, competitors: 98, cpc: 0.45, conversion: 16.8, competition: '低', recommend: '蓝海词' },
+        { word: 'outdoor pumpkin lights battery', volume: 6200, trend: 156, competitors: 410, cpc: 0.92, conversion: 9.2, competition: '中', recommend: '推荐' },
+        { word: 'halloween yard decorations light up', volume: 5400, trend: 224, competitors: 280, cpc: 0.78, conversion: 11.3, competition: '中', recommend: '推荐' },
+        { word: 'remote control halloween lights', volume: 4200, trend: 189, competitors: 156, cpc: 0.62, conversion: 13.5, competition: '低', recommend: '必埋词' },
+      ],
+      suppliers: [
+        { name: '深圳市某光电有限公司', price: '¥15.2', moq: 200, delivery: '10天', score: 4.9, repurchase: '92%', custom: '支持LOGO/包装定制', level: '金牌工厂' },
+        { name: '义乌市某工艺品厂', price: '¥12.8', moq: 500, delivery: '15天', score: 4.7, repurchase: '85%', custom: '支持颜色定制', level: '实力商家' },
+        { name: '东莞市某电子科技', price: '¥18.5', moq: 100, delivery: '7天', score: 4.8, repurchase: '89%', custom: '全定制开模', level: '金牌工厂' },
+        { name: '汕头市某玩具厂', price: '¥14.2', moq: 300, delivery: '12天', score: 4.6, repurchase: '78%', custom: '支持包装定制', level: '实力商家' },
+        { name: '广州市某照明有限公司', price: '¥16.8', moq: 200, delivery: '10天', score: 4.8, repurchase: '91%', custom: '支持功能定制', level: '金牌工厂' },
+      ],
+      inventoryPlans: [
+        { name: '保守方案', quantity: '2,000件', cost: '¥3.04万', sellThrough: '98%', profit: '$1.68万', risk: '极低', desc: '适合首次试款，库存风险小，但可能断货损失排名' },
+        { name: '稳健方案（推荐）', quantity: '3,200件', cost: '¥4.86万', sellThrough: '94%', profit: '$2.69万', risk: '低', desc: '平衡销量与库存风险，覆盖旺季80%需求' },
+        { name: '激进方案', quantity: '5,000件', cost: '¥7.40万', sellThrough: '82%', profit: '$3.45万', risk: '中', desc: '全力冲排名，但节后可能剩余900件需清仓' },
+      ],
+      certifications: [
+        { name: 'CPC儿童产品认证', status: '已完成', desc: '针对12岁以下儿童产品的强制认证', date: '2026-08-15' },
+        { name: 'UL安全测试报告', status: '已完成', desc: 'LED电子产品安全标准测试', date: '2026-08-20' },
+        { name: 'CPSIA铅含量检测', status: '已完成', desc: '表面涂层铅含量<90ppm', date: '2026-08-22' },
+        { name: 'ASTM F963玩具标准', status: '待办理', desc: '小部件拉力、阻燃性能测试', date: '预计2026-09-10完成' },
+      ],
+      patents: [
+        { type: '外观设计专利', risk: '中风险', desc: '某知名品牌持有南瓜造型外观专利（USDxxxxxx），需调整造型设计，避免完全雷同', action: '建议修改纹路和表情设计' },
+        { type: '实用新型专利', risk: '低风险', desc: '遥控LED灯控制电路有通用专利，采用公版方案即可规避', action: '使用成熟公版电路方案' },
+        { type: '商标侵权', risk: '无风险', desc: '未使用任何品牌商标、卡通形象，产品为通用设计', action: '保持通用设计，不添加IP元素' },
+      ],
+      multisiteData: [
+        { site: '美国站', volume: '45,200', competitors: 1200, price: '$24.99', rating: 4.2, ratio: 0.7, sales: '3,800', score: 92, level: '强烈推荐' },
+        { site: '加拿大站', volume: '8,600', competitors: 180, price: '$29.99', rating: 4.1, ratio: 0.4, sales: '720', score: 85, level: '推荐' },
+        { site: '英国站', volume: '12,400', competitors: 320, price: '£21.99', rating: 4.0, ratio: 0.6, sales: '980', score: 78, level: '推荐' },
+        { site: '德国站', volume: '9,800', competitors: 450, price: '€24.99', rating: 3.9, ratio: 0.9, sales: '650', score: 68, level: '谨慎' },
+        { site: '法国站', volume: '6,200', competitors: 210, price: '€22.99', rating: 4.1, ratio: 0.5, sales: '480', score: 74, level: '可考虑' },
+        { site: '日本站', volume: '3,400', competitors: 95, price: '¥2,980', rating: 4.3, ratio: 0.3, sales: '280', score: 72, level: '可考虑' },
+      ],
+      trendData: { months: ['7月', '8月', '9月', '10月', '11月'], search: [12000, 28000, 65000, 125000, 18000], sales: [800, 2200, 6800, 15200, 2100] },
+      categoryData: [{ name: '装饰类', value: 38 }, { name: '服饰类', value: 26 }, { name: '派对类', value: 18 }, { name: '宠物类', value: 12 }, { name: '其他', value: 6 }],
+    },
+
+    '黑五网一 2026': {
+      kpi: { products: 256, avgScore: 72.8, highGrowth: 32, blueOcean: 28, painTotal: 3241, commonPain: 38, improve: 22, accuracy: 91.5 },
+      products: [
+        { id: 1, name: '无线降噪耳机（旗舰款）', category: '电子类 · 音频设备', score: 94, growth: 412, competitors: 156, price: '$79.99', profit: '38%', threshold: '高', pain: '降噪效果差、续航虚标', painDetails: ['主动降噪形同虚设', '标称30小时实际只有18小时', '佩戴夹头不舒适'], improve: '升级混合降噪芯片、真实40小时续航、人体工学耳罩' },
+        { id: 2, name: '智能扫地机器人（激光导航）', category: '电子类 · 智能家居', score: 91, growth: 356, competitors: 89, price: '$199.99', profit: '32%', threshold: '高', pain: '避障差、回充失败', painDetails: ['经常撞到家具和宠物', '找不到回充基站', '边角清洁不到位'], improve: '3D结构光避障、精准回充定位、增加边刷覆盖' },
+        { id: 3, name: '便携投影仪（1080P）', category: '电子类 · 影音设备', score: 88, growth: 298, competitors: 124, price: '$129.99', profit: '41%', threshold: '中', pain: '亮度低、对焦慢', painDetails: ['白天完全看不清', '自动对焦要等10秒', '风扇噪音大'], improve: '800ANSI高亮度、秒级对焦、静音散热设计' },
+        { id: 4, name: '空气炸锅（大容量可视款）', category: '家居类 · 厨房电器', score: 86, growth: 267, competitors: 203, price: '$89.99', profit: '35%', threshold: '中', pain: '容量虚标、清洗困难', painDetails: ['标称6L实际只能放4L', '烤网涂层脱落难清洗', '加热不均匀一边焦一边生'], improve: '真实大容量、可拆卸不粘内胆、上下双加热' },
+        { id: 5, name: '电动牙刷（声波美白款）', category: '个护类 · 口腔护理', score: 83, growth: 234, competitors: 312, price: '$39.99', profit: '52%', threshold: '低', pain: '震动力度弱、刷头贵', painDetails: ['清洁力度不如手动', '替换刷头一个要$8', '防水差进水就坏'], improve: '40000次/分钟高频震动、兼容通用刷头、IPX8全防水' },
+        { id: 6, name: '智能手表（运动健康款）', category: '电子类 · 可穿戴', score: 81, growth: 198, competitors: 267, price: '$59.99', profit: '45%', threshold: '中', pain: '心率不准、续航短', painDetails: ['心率测量偏差20%以上', '一天一充太麻烦', '表带过敏起红疹'], improve: '光学心率升级、14天超长续航、亲肤硅胶表带' },
+        { id: 7, name: '筋膜枪（专业级）', category: '个护类 · 按摩放松', score: 78, growth: 176, competitors: 189, price: '$49.99', profit: '48%', threshold: '低', pain: '噪音大、力度不够', painDetails: ['开机像电钻吵', '最大力度还是不够深', '电池用半年就衰减'], improve: '静音无刷电机、30kgf大推力、可拆卸锂电池' },
+        { id: 8, name: '车载手机支架（无线充）', category: '汽车类 · 车载配件', score: 75, growth: 154, competitors: 345, price: '$24.99', profit: '55%', threshold: '低', pain: '夹不紧、充电慢', painDetails: ['过减速带手机就掉', '无线充比线充慢3倍', '出风口夹片断裂'], improve: '电动锁紧防抖、15W快充、加固金属夹片' },
+      ],
+      painDimensions: [
+        { name: '产品质量', count: 987, percent: 82, top: '电池衰减快、涂层脱落、按键失灵' },
+        { name: '功能体验', count: 876, percent: 78, top: '降噪/清洁效果差、参数虚标、操作复杂' },
+        { name: '规格适配', count: 423, percent: 52, top: '容量虚标、尺寸偏大、配件不通用' },
+        { name: '场景适配', count: 356, percent: 45, top: '噪音影响使用、防水差、户外不耐用' },
+        { name: '包装物流', count: 234, percent: 30, top: '运输破损、配件缺失、说明书简陋' },
+        { name: '合规安全', count: 198, percent: 25, top: '电池鼓包、无FCC认证、材质过敏' },
+      ],
+      reviews: [
+        { stars: 2, date: '2026-08-20', product: '无线耳机', text: 'Noise cancellation is a joke. I can still hear everything on the plane. Battery lasts maybe 18 hours not 30 as advertised.', textZh: '降噪就是个笑话。飞机上什么都能听到。电池也就用18小时，不是宣传的30小时。', tags: ['降噪差', '续航虚标', '功能体验'] },
+        { stars: 1, date: '2026-08-18', product: '扫地机器人', text: 'It keeps bumping into my furniture and my dog. Half the time it cant find the charging dock and dies in the middle of the floor.', textZh: '老是撞家具和我家狗。一半时间找不到充电桩，直接死在地板中间。', tags: ['避障差', '回充失败', '产品质量'] },
+        { stars: 2, date: '2026-08-15', product: '空气炸锅', text: 'The 6L is a lie, you can barely fit 4 chicken wings. The coating started peeling after 3 uses. Heating is very uneven.', textZh: '6升是骗人的，4个鸡翅都放不下。用了3次涂层就掉了。加热特别不均匀。', tags: ['容量虚标', '涂层脱落', '产品质量'] },
+        { stars: 3, date: '2026-08-12', product: '电动牙刷', text: 'Cleaning power is weaker than my manual toothbrush. Replacement heads are $8 each, what a ripoff. Mine stopped working after water got inside.', textZh: '清洁力还不如我手动刷。替换头一个8刀，抢钱啊。我的进水就坏了。', tags: ['力度弱', '刷头贵', '防水差'] },
+        { stars: 1, date: '2026-08-10', product: '筋膜枪', text: 'Sounds like a power drill, my neighbors complained. Max force still not deep enough. Battery barely holds a charge after 6 months.', textZh: '声音像电钻，邻居都投诉了。最大力度还是不够深。用了半年电池就不行了。', tags: ['噪音大', '力度不够', '电池衰减'] },
+        { stars: 2, date: '2026-08-08', product: '车载支架', text: 'Phone falls out every time I hit a speed bump. Wireless charging is so slow it actually drains battery. The clip broke after 2 weeks.', textZh: '一过减速带手机就掉。无线充慢到还掉电。夹片两周就断了。', tags: ['夹不紧', '充电慢', '易断裂'] },
+      ],
+      improvements: [
+        { priority: 'p1', title: '真实参数不夸大', desc: '续航、容量、降噪效果等核心参数如实标注，避免用户收到后落差太大给差评', cost: '无直接成本', willingness: '差评率可降低 60%' },
+        { priority: 'p1', title: '升级核心性能芯片', desc: '耳机用混合降噪芯片、扫地机用3D避障，解决用户最核心的功能不满', cost: '成本增加 ¥15-30/件', willingness: '用户愿意多付 $10-20' },
+        { priority: 'p2', title: '通用配件兼容设计', desc: '牙刷头、滤网等耗材兼容市面通用款，降低用户后续使用成本', cost: '成本增加 ¥2/件', willingness: '复购率提升 35%' },
+        { priority: 'p2', title: '静音与人体工学优化', desc: '筋膜枪/投影仪用静音电机，耳机/手表用亲肤材质，提升使用舒适度', cost: '成本增加 ¥5-8/件', willingness: '好评率提升 25%' },
+        { priority: 'p3', title: '多语言详细说明书', desc: '黑五新用户多，提供图文+视频教程，降低因不会用导致的退货', cost: '成本增加 ¥1/件', willingness: '退货率降低 18%' },
+      ],
+      combos: [
+        { name: '数码达人组合', items: ['无线降噪耳机×1', '智能手表×1', '便携充电宝×1'], price: '$129.99', profit: '42%', reason: '黑五数码套餐，客单价提升60%，适合送礼' },
+        { name: '智能家居组合', items: ['扫地机器人×1', '智能音箱×1', '智能灯泡×4'], price: '$249.99', profit: '35%', reason: '一站式智能家居入门，降低用户决策成本' },
+        { name: '个护健康组合', items: ['电动牙刷×1', '筋膜枪×1', '冲牙器×1'], price: '$89.99', profit: '50%', reason: '个护品类复购率高，组合购买提升客单价' },
+      ],
+      keywords: [
+        { word: 'black friday deals 2026', volume: 125000, trend: 523, competitors: 3200, cpc: 2.15, conversion: 6.8, competition: '高', recommend: '核心词' },
+        { word: 'wireless earbuds noise cancelling', volume: 89000, trend: 287, competitors: 1800, cpc: 1.45, conversion: 9.2, competition: '高', recommend: '核心词' },
+        { word: 'robot vacuum laser navigation', volume: 45000, trend: 342, competitors: 450, cpc: 1.85, conversion: 11.5, competition: '中', recommend: '必埋词' },
+        { word: 'air fryer 6qt large', volume: 67000, trend: 198, competitors: 890, cpc: 1.12, conversion: 10.8, competition: '中', recommend: '推荐' },
+        { word: 'portable projector 1080p', volume: 38000, trend: 267, competitors: 320, cpc: 0.95, conversion: 12.3, competition: '低', recommend: '必埋词' },
+        { word: 'electric toothbrush for adults', volume: 52000, trend: 156, competitors: 1200, cpc: 0.78, conversion: 8.9, competition: '高', recommend: '推荐' },
+        { word: 'cyber monday electronics deals', volume: 78000, trend: 412, competitors: 2100, cpc: 1.95, conversion: 7.5, competition: '高', recommend: '核心词' },
+        { word: 'smart watch fitness tracker', volume: 41000, trend: 178, competitors: 980, cpc: 0.88, conversion: 9.6, competition: '中', recommend: '推荐' },
+      ],
+      suppliers: [
+        { name: '深圳市某电子科技', price: '¥48.5', moq: 500, delivery: '15天', score: 4.9, repurchase: '94%', custom: '支持固件定制', level: '金牌工厂' },
+        { name: '东莞市某智能设备', price: '¥125.0', moq: 200, delivery: '20天', score: 4.8, repurchase: '90%', custom: '支持APP开发', level: '金牌工厂' },
+        { name: '广州市某电器制造', price: '¥52.8', moq: 300, delivery: '12天', score: 4.7, repurchase: '87%', custom: '支持外观定制', level: '实力商家' },
+        { name: '中山市某个护电器', price: '¥18.5', moq: 1000, delivery: '10天', score: 4.6, repurchase: '82%', custom: '支持包装定制', level: '实力商家' },
+        { name: '佛山市某家电制造', price: '¥35.2', moq: 500, delivery: '15天', score: 4.8, repurchase: '89%', custom: '支持功能定制', level: '金牌工厂' },
+      ],
+      inventoryPlans: [
+        { name: '保守方案', quantity: '1,500件', cost: '¥7.28万', sellThrough: '96%', profit: '$3.25万', risk: '极低', desc: '黑五前小批量试款，售完即止，风险可控' },
+        { name: '稳健方案（推荐）', quantity: '3,000件', cost: '¥13.80万', sellThrough: '91%', profit: '$6.48万', risk: '低', desc: '覆盖黑五网一两大节点，库存周转健康' },
+        { name: '激进方案', quantity: '6,000件', cost: '¥25.60万', sellThrough: '78%', profit: '$10.20万', risk: '中', desc: '全力冲黑五BSR，但节后可能剩余1300件' },
+      ],
+      certifications: [
+        { name: 'FCC认证', status: '已完成', desc: '美国电子产品强制认证', date: '2026-08-10' },
+        { name: 'UL安全测试', status: '已完成', desc: '电池类产品安全标准', date: '2026-08-15' },
+        { name: 'CE认证', status: '已完成', desc: '欧盟市场准入认证', date: '2026-08-20' },
+        { name: 'RoHS环保认证', status: '待办理', desc: '有害物质限制使用', date: '预计2026-09-15完成' },
+      ],
+      patents: [
+        { type: '发明专利', risk: '高风险', desc: '降噪算法、激光导航等核心技术有大量专利布局，需重点规避', action: '建议使用公版方案或获取授权' },
+        { type: '外观设计专利', risk: '中风险', desc: '耳机、手表外观设计专利密集，需做差异化设计', action: '建议调整外观造型，避免雷同' },
+        { type: '商标侵权', risk: '低风险', desc: '避免使用品牌类似名称和包装设计', action: '注册自有商标，保持独立设计' },
+      ],
+      multisiteData: [
+        { site: '美国站', volume: '125,000', competitors: 3200, price: '$79.99', rating: 4.1, ratio: 0.8, sales: '8,500', score: 94, level: '强烈推荐' },
+        { site: '英国站', volume: '38,000', competitors: 680, price: '£69.99', rating: 4.0, ratio: 0.6, sales: '2,200', score: 82, level: '推荐' },
+        { site: '德国站', volume: '42,000', competitors: 890, price: '€74.99', rating: 3.9, ratio: 0.9, sales: '2,400', score: 75, level: '推荐' },
+        { site: '日本站', volume: '18,000', competitors: 320, price: '¥9,800', rating: 4.2, ratio: 0.5, sales: '1,100', score: 78, level: '推荐' },
+        { site: '加拿大站', volume: '15,000', competitors: 280, price: '$89.99', rating: 4.1, ratio: 0.5, sales: '950', score: 80, level: '推荐' },
+        { site: '法国站', volume: '12,000', competitors: 240, price: '€69.99', rating: 4.0, ratio: 0.6, sales: '720', score: 72, level: '可考虑' },
+      ],
+      trendData: { months: ['9月', '10月', '11月', '12月', '1月'], search: [25000, 58000, 185000, 95000, 22000], sales: [1200, 3500, 12800, 5600, 1400] },
+      categoryData: [{ name: '电子类', value: 42 }, { name: '家居类', value: 24 }, { name: '个护类', value: 18 }, { name: '服饰类', value: 10 }, { name: '其他', value: 6 }],
+    },
+
+    '圣诞节 2026': {
+      kpi: { products: 198, avgScore: 74.2, highGrowth: 28, blueOcean: 35, painTotal: 2654, commonPain: 31, improve: 18, accuracy: 91.8 },
+      products: [
+        { id: 1, name: '智能圣诞树（APP控制）', category: '装饰类 · 节日装饰', score: 93, growth: 387, competitors: 78, price: '$89.99', profit: '45%', threshold: '中', pain: '安装复杂、灯珠易坏', painDetails: ['组装要2小时，说明书看不懂', '用了一周就有一串灯不亮了', '树型稀疏不饱满'], improve: '免安装折叠设计、独立灯珠可更换、加密枝叶' },
+        { id: 2, name: '圣诞主题香薰蜡烛礼盒', category: '家居类 · 香氛礼品', score: 90, growth: 312, competitors: 134, price: '$34.99', profit: '62%', threshold: '低', pain: '香味淡、燃烧不均', painDetails: ['点燃后几乎闻不到香味', '蜡池烧不平，挂壁严重', '包装简陋不像礼品'], improve: '高浓度香精、双棉芯平烧、高端礼盒包装' },
+        { id: 3, name: '儿童圣诞积木玩具（电动）', category: '玩具类 · 益智积木', score: 88, growth: 276, competitors: 167, price: '$49.99', profit: '48%', threshold: '中', pain: '零件缺失、咬合松', painDetails: ['少了5个零件，拼到一半卡住', '积木咬合太松一碰就倒', '电动马达噪音大'], improve: '严格质检补件、高精度模具、静音马达' },
+        { id: 4, name: '圣诞针织毛衣（丑毛衣系列）', category: '服饰类 · 节日服饰', score: 85, growth: 245, competitors: 289, price: '$39.99', profit: '52%', threshold: '低', pain: '起球、版型差', painDetails: ['洗一次就起球严重', '版型肥大像麻袋', '印花开裂掉渣'], improve: '抗起球纱线、修身版型、环保印花工艺' },
+        { id: 5, name: '圣诞倒数日历礼盒（美妆）', category: '美妆类 · 节日礼盒', score: 83, growth: 298, competitors: 95, price: '$69.99', profit: '58%', threshold: '中', pain: '小样太多、值不回票价', painDetails: ['24格里15个是小样，太坑了', '很多色号不实用', '盒子做工粗糙'], improve: '增加正装比例、精选热门色号、精装礼盒' },
+        { id: 6, name: '圣诞投影灯（户外雪花）', category: '装饰类 · 户外灯饰', score: 81, growth: 213, competitors: 178, price: '$29.99', profit: '55%', threshold: '低', pain: '投影模糊、不防水', painDetails: ['雪花图案模糊不清', '下雨就进水坏了', '投射距离太短'], improve: '高清透镜图案、IP65防水、15米超远投射' },
+        { id: 7, name: '圣诞袜（大号刺绣款）', category: '装饰类 · 节日布艺', score: 78, growth: 176, competitors: 234, price: '$16.99', profit: '60%', threshold: '低', pain: '尺寸小、做工差', painDetails: ['比想象中小很多，装不下礼物', '刺绣线头多', '布料薄透'], improve: '加大尺寸、精细锁边、加厚亚麻面料' },
+        { id: 8, name: '热红酒香料包套装', category: '食品类 · 节日食品', score: 75, growth: 189, competitors: 89, price: '$19.99', profit: '65%', threshold: '低', pain: '香料碎、味道淡', painDetails: ['都是碎渣，不是整颗香料', '煮出来味道很淡', '包装漏粉'], improve: '整颗香料独立包装、配方加量、密封铝箔袋' },
+      ],
+      painDimensions: [
+        { name: '产品质量', count: 823, percent: 80, top: '灯珠易坏、印刷开裂、布料薄透' },
+        { name: '功能体验', count: 687, percent: 72, top: '香味淡、投影模糊、组装困难' },
+        { name: '规格适配', count: 456, percent: 58, top: '尺寸偏小、容量不足、版型肥大' },
+        { name: '场景适配', count: 398, percent: 50, top: '户外不防水、礼品感不足、家庭多人不够用' },
+        { name: '包装物流', count: 287, percent: 38, top: '运输破损、包装简陋、配件缺失' },
+        { name: '合规安全', count: 176, percent: 28, top: '玩具小部件、蜡烛阻燃、食品资质' },
+      ],
+      reviews: [
+        { stars: 2, date: '2026-08-22', product: '智能圣诞树', text: 'Took me 2 hours to assemble and the instructions are useless. After one week half the lights stopped working. The tree looks sparse and cheap.', textZh: '组装花了2小时，说明书根本没用。一周后一半灯不亮了。树看起来又稀疏又廉价。', tags: ['安装难', '灯易坏', '产品质量'] },
+        { stars: 1, date: '2026-08-19', product: '香薰蜡烛', text: 'I can barely smell anything when its burning. The wax tunnels badly and leaves half the wax unused. Packaging looks cheap for a gift.', textZh: '点燃后几乎闻不到味。蜡池挂壁严重，一半蜡都用不了。包装当礼物太廉价了。', tags: ['香味淡', '燃烧不均', '包装差'] },
+        { stars: 2, date: '2026-08-16', product: '积木玩具', text: 'Missing 5 pieces, had to contact seller for replacements. Bricks dont stay together, falls apart if you look at it. Motor is very loud.', textZh: '少了5个零件，得找卖家补。积木根本拼不牢，看一眼就倒。马达声音超大。', tags: ['缺零件', '咬合松', '噪音大'] },
+        { stars: 3, date: '2026-08-14', product: '圣诞毛衣', text: 'Pilled horribly after one wash. Fit is like a potato sack, super boxy. The print started cracking after first wear.', textZh: '洗一次就起球起得厉害。版型像麻袋，特别肥大。穿一次印花就裂了。', tags: ['起球', '版型差', '印花裂'] },
+        { stars: 1, date: '2026-08-11', product: '倒数日历', text: '15 out of 24 are tiny samples, total ripoff. Most shades are unwearable. The box itself is flimsy and came damaged.', textZh: '24格里15个都是迷你小样，太坑了。大部分色号根本用不了。盒子又薄又破，收到就坏了。', tags: ['小样多', '不实用', '包装差'] },
+        { stars: 2, date: '2026-08-09', product: '投影灯', text: 'Snowflake pattern is blurry, looks like blobs. Stopped working after one rainstorm. Projection distance is like 3 feet max.', textZh: '雪花图案模糊，就是一团团的。下了一次雨就坏了。投射距离最多3英尺。', tags: ['模糊', '不防水', '距离短'] },
+      ],
+      improvements: [
+        { priority: 'p1', title: '免安装/易组装设计', desc: '圣诞树采用折叠免安装结构，其他产品减少组装步骤，降低用户使用门槛', cost: '成本增加 ¥5-10/件', willingness: '退货率降低 35%' },
+        { priority: 'p1', title: '礼品级包装升级', desc: '圣诞产品送礼属性强，升级礼盒包装、增加贺卡、丝带等元素', cost: '成本增加 ¥3-6/件', willingness: '用户愿意多付 $5-10' },
+        { priority: 'p2', title: '品质感提升', desc: '蜡烛加香精浓度、毛衣用抗起球纱线、玩具用高精度模具，解决核心质量不满', cost: '成本增加 ¥4-8/件', willingness: '好评率提升 30%' },
+        { priority: 'p2', title: '户外产品防水升级', desc: '灯饰、投影灯等户外产品升级IP65防水，解决雨天损坏痛点', cost: '成本增加 ¥2-4/件', willingness: '复购率提升 25%' },
+        { priority: 'p3', title: '增加实用正装比例', desc: '倒数日历等礼盒类增加正装比例，避免用户觉得不值', cost: '成本增加 ¥8/件', willingness: '客单价可提升 20%' },
+      ],
+      combos: [
+        { name: '圣诞装饰全家桶', items: ['智能圣诞树×1', '投影灯×1', '圣诞袜×3', '花环×1'], price: '$129.99', profit: '50%', reason: '一站式圣诞装饰，客单价提升120%，适合家庭用户' },
+        { name: '圣诞礼品组合', items: ['香薰蜡烛礼盒×1', '针织毛衣×1', '热红酒套装×1'], price: '$79.99', profit: '58%', reason: '送礼场景组合，包装精美，适合交换礼物' },
+        { name: '亲子圣诞组合', items: ['儿童积木×1', '亲子毛衣×2', '倒数日历×1'], price: '$139.99', profit: '52%', reason: '覆盖家庭亲子场景，降低单一品类滞销风险' },
+      ],
+      keywords: [
+        { word: 'christmas decorations 2026', volume: 98000, trend: 387, competitors: 2100, cpc: 1.35, conversion: 7.8, competition: '高', recommend: '核心词' },
+        { word: 'pre lit christmas tree 6ft', volume: 67000, trend: 298, competitors: 560, cpc: 1.65, conversion: 11.2, competition: '中', recommend: '必埋词' },
+        { word: 'christmas candle gift set', volume: 42000, trend: 312, competitors: 280, cpc: 0.95, conversion: 13.5, competition: '低', recommend: '必埋词' },
+        { word: 'ugly christmas sweater women', volume: 58000, trend: 245, competitors: 890, cpc: 0.88, conversion: 9.6, competition: '中', recommend: '推荐' },
+        { word: 'advent calendar beauty 2026', volume: 35000, trend: 423, competitors: 120, cpc: 1.25, conversion: 15.8, competition: '低', recommend: '蓝海词' },
+        { word: 'christmas projector lights outdoor', volume: 28000, trend: 213, competitors: 340, cpc: 0.78, conversion: 10.2, competition: '中', recommend: '推荐' },
+        { word: 'christmas stocking large personalized', volume: 18000, trend: 176, competitors: 180, cpc: 0.65, conversion: 12.8, competition: '低', recommend: '推荐' },
+        { word: 'mulled wine spice kit gift', volume: 12000, trend: 189, competitors: 65, cpc: 0.45, conversion: 16.2, competition: '低', recommend: '蓝海词' },
+      ],
+      suppliers: [
+        { name: '东莞市某灯饰厂', price: '¥42.5', moq: 200, delivery: '15天', score: 4.9, repurchase: '93%', custom: '支持APP功能定制', level: '金牌工厂' },
+        { name: '广州市某香氛公司', price: '¥12.8', moq: 500, delivery: '10天', score: 4.8, repurchase: '91%', custom: '支持香味定制', level: '金牌工厂' },
+        { name: '汕头市某玩具厂', price: '¥22.5', moq: 300, delivery: '12天', score: 4.7, repurchase: '86%', custom: '支持图案定制', level: '实力商家' },
+        { name: '东莞市某针织厂', price: '¥18.2', moq: 500, delivery: '15天', score: 4.6, repurchase: '84%', custom: '支持款式定制', level: '实力商家' },
+        { name: '义乌市某工艺品厂', price: '¥8.5', moq: 1000, delivery: '8天', score: 4.7, repurchase: '88%', custom: '支持包装定制', level: '实力商家' },
+      ],
+      inventoryPlans: [
+        { name: '保守方案', quantity: '1,800件', cost: '¥5.40万', sellThrough: '97%', profit: '$2.85万', risk: '极低', desc: '圣诞前小批量备货，售完即止' },
+        { name: '稳健方案（推荐）', quantity: '3,500件', cost: '¥9.80万', sellThrough: '92%', profit: '$5.42万', risk: '低', desc: '覆盖12月全月销售，库存周转健康' },
+        { name: '激进方案', quantity: '6,000件', cost: '¥15.60万', sellThrough: '80%', profit: '$8.20万', risk: '中', desc: '全力冲圣诞季，但节后可能剩余1200件需清仓' },
+      ],
+      certifications: [
+        { name: 'CPC儿童产品认证', status: '已完成', desc: '玩具类产品强制认证', date: '2026-08-12' },
+        { name: 'UL灯饰安全认证', status: '已完成', desc: '灯饰产品安全标准', date: '2026-08-18' },
+        { name: 'FDA食品接触认证', status: '已完成', desc: '食品类产品资质', date: '2026-08-22' },
+        { name: '阻燃测试报告', status: '待办理', desc: '圣诞装饰类阻燃要求', date: '预计2026-09-20完成' },
+      ],
+      patents: [
+        { type: '外观设计专利', risk: '中风险', desc: '圣诞树造型、毛衣图案等外观专利较多，需做差异化', action: '建议原创设计，避免照搬热门款式' },
+        { type: '实用新型专利', risk: '低风险', desc: '智能控制、投影等技术有通用方案', action: '使用成熟公版方案即可' },
+        { type: '版权侵权', risk: '高风险', desc: '圣诞毛衣图案、倒数日历设计可能涉及版权', action: '使用原创图案，避免知名IP元素' },
+      ],
+      multisiteData: [
+        { site: '美国站', volume: '98,000', competitors: 2100, price: '$89.99', rating: 4.2, ratio: 0.7, sales: '6,200', score: 93, level: '强烈推荐' },
+        { site: '英国站', volume: '42,000', competitors: 480, price: '£79.99', rating: 4.1, ratio: 0.5, sales: '2,800', score: 84, level: '推荐' },
+        { site: '德国站', volume: '38,000', competitors: 520, price: '€84.99', rating: 4.0, ratio: 0.7, sales: '2,100', score: 76, level: '推荐' },
+        { site: '加拿大站', volume: '18,000', competitors: 220, price: '$99.99', rating: 4.1, ratio: 0.4, sales: '1,100', score: 82, level: '推荐' },
+        { site: '法国站', volume: '15,000', competitors: 180, price: '€79.99', rating: 4.2, ratio: 0.5, sales: '950', score: 78, level: '可考虑' },
+        { site: '日本站', volume: '8,000', competitors: 95, price: '¥12,800', rating: 4.3, ratio: 0.3, sales: '520', score: 74, level: '可考虑' },
+      ],
+      trendData: { months: ['9月', '10月', '11月', '12月', '1月'], search: [18000, 45000, 98000, 156000, 12000], sales: [900, 2800, 7500, 12800, 800] },
+      categoryData: [{ name: '装饰类', value: 36 }, { name: '礼品类', value: 28 }, { name: '服饰类', value: 16 }, { name: '玩具类', value: 12 }, { name: '食品类', value: 8 }],
+    },
+
+    '情人节 2027': {
+      kpi: { products: 156, avgScore: 73.6, highGrowth: 22, blueOcean: 38, painTotal: 2187, commonPain: 26, improve: 16, accuracy: 92.1 },
+      products: [
+        { id: 1, name: '永生花礼盒（蓝牙音箱款）', category: '礼品类 · 鲜花礼品', score: 91, growth: 356, competitors: 112, price: '$59.99', profit: '58%', threshold: '中', pain: '花易枯萎、音质差', painDetails: ['收到一周花就蔫了', '蓝牙音箱音质像收音机', '礼盒包装压变形'], improve: '真永生花工艺、升级喇叭单元、加固礼盒包装' },
+        { id: 2, name: '情侣款智能对戒（可刻字）', category: '珠宝类 · 时尚配饰', score: 89, growth: 298, competitors: 87, price: '$79.99', profit: '62%', threshold: '中', pain: '掉色、尺寸不准', painDetails: ['戴了两周就发黑掉色', '尺码表不准，戴着太松', '刻字模糊看不清'], improve: '18K镀金防过敏、精准美码、激光深度刻字' },
+        { id: 3, name: '香薰精油礼盒（情侣款）', category: '个护类 · 香氛礼品', score: 86, growth: 267, competitors: 145, price: '$39.99', profit: '65%', threshold: '低', pain: '香味刺鼻、量太少', painDetails: ['香味太浓刺鼻，像廉价香水', '每瓶只有5ml，用两次就没了', '滴管设计漏液'], improve: '天然淡香配方、10ml大容量、防漏滴管设计' },
+        { id: 4, name: '情侣睡衣套装（丝绸款）', category: '服饰类 · 家居服饰', score: 84, growth: 234, competitors: 198, price: '$49.99', profit: '52%', threshold: '低', pain: '起静电、尺码差', painDetails: ['冬天穿静电严重，噼里啪啦', '男款尺码偏小', '缝线粗糙开线'], improve: '抗静电真丝面料、标准男女码、精密锁边工艺' },
+        { id: 5, name: 'DIY手工巧克力礼盒', category: '食品类 · 节日食品', score: 82, growth: 287, competitors: 76, price: '$34.99', profit: '55%', threshold: '低', pain: '融化变形、口感差', painDetails: ['收到时巧克力全化了变形', '口感像代可可脂，太甜', '包装简陋没仪式感'], improve: '冰袋保温发货、纯可可脂、高端礼盒包装' },
+        { id: 6, name: '情侣项链（磁吸拼接款）', category: '珠宝类 · 时尚配饰', score: 80, growth: 213, competitors: 167, price: '$45.99', profit: '60%', threshold: '低', pain: '磁力弱、链条断', painDetails: ['磁吸根本吸不住，一碰就掉', '链条太细，戴一周就断了', '吊坠掉色'], improve: '强磁钕铁硼、加固链条、多层电镀保色' },
+        { id: 7, name: '情人节主题LED相框', category: '家居类 · 装饰礼品', score: 77, growth: 178, competitors: 134, price: '$29.99', profit: '58%', threshold: '低', pain: '灯不亮、照片难放', painDetails: ['LED灯一半不亮', '放照片要拆半天，设计反人类', '塑料感强'], improve: '全灯珠质检、抽拉式换照片、哑光质感边框' },
+        { id: 8, name: '情侣马克杯（温度感应款）', category: '家居类 · 餐厨用品', score: 74, growth: 156, competitors: 223, price: '$24.99', profit: '55%', threshold: '低', pain: '变色失效、杯把烫手', painDetails: ['用了一个月就不变色了', '杯把设计不合理，装热水烫手', '杯口有毛刺'], improve: '长效感温涂层、隔热杯把、精细打磨杯口' },
+      ],
+      painDimensions: [
+        { name: '产品质量', count: 687, percent: 78, top: '掉色、链条断、灯珠不亮' },
+        { name: '功能体验', count: 598, percent: 72, top: '香味刺鼻、磁力弱、变色失效' },
+        { name: '规格适配', count: 423, percent: 55, top: '尺码不准、容量太小、尺寸偏差' },
+        { name: '场景适配', count: 376, percent: 48, top: '礼品感不足、运输易损、使用不便' },
+        { name: '包装物流', count: 312, percent: 42, top: '包装变形、巧克力融化、配件缺失' },
+        { name: '合规安全', count: 145, percent: 25, top: '材质过敏、食品资质、镍释放超标' },
+      ],
+      reviews: [
+        { stars: 2, date: '2026-08-25', product: '永生花礼盒', text: 'Flowers started wilting after one week, not preserved at all. The Bluetooth speaker sounds terrible, like a cheap toy. Box arrived crushed.', textZh: '花一周就蔫了，根本不是永生花。蓝牙音箱音质烂得像廉价玩具。盒子收到就压瘪了。', tags: ['花易枯', '音质差', '包装坏'] },
+        { stars: 1, date: '2026-08-22', product: '情侣对戒', text: 'Turned black after 2 weeks of wearing. Size chart is wrong, fits way too loose. The engraving is so blurry you cant read it.', textZh: '戴了两周就发黑了。尺码表不准，戴着特别松。刻字模糊到根本看不清。', tags: ['掉色', '尺码不准', '刻字差'] },
+        { stars: 2, date: '2026-08-19', product: '香薰礼盒', text: 'The smell is so strong and synthetic, gives me a headache. Each bottle is only 5ml, gone in 2 uses. The dropper leaks everywhere.', textZh: '香味太浓太化工，闻了头疼。每瓶才5ml，用两次就没了。滴管漏得到处都是。', tags: ['香味刺鼻', '量太少', '漏液'] },
+        { stars: 3, date: '2026-08-16', product: '情侣睡衣', text: 'So much static in winter, its shocking me constantly. Mens size runs small. Stitching came undone after first wash.', textZh: '冬天静电超大，一直电我。男款尺码偏小。洗一次缝线就开了。', tags: ['静电', '尺码小', '缝线差'] },
+        { stars: 1, date: '2026-08-13', product: '巧克力礼盒', text: 'Chocolate was completely melted and deformed when it arrived. Tastes like cheap compound chocolate, way too sweet. No ice pack included.', textZh: '收到时巧克力全化了变形。吃起来像廉价代可可脂，太甜了。连冰袋都没有。', tags: ['融化', '口感差', '无冰袋'] },
+        { stars: 2, date: '2026-08-10', product: '磁吸项链', text: 'Magnet is so weak it falls apart if you move. Chain is super thin and broke after a week. Pendant started discoloring.', textZh: '磁力超弱，一动就掉。链条特别细，一周就断了。吊坠开始掉色了。', tags: ['磁力弱', '链条断', '掉色'] },
+      ],
+      improvements: [
+        { priority: 'p1', title: '防掉色/防过敏材质升级', desc: '珠宝类采用18K镀金+925银针，通过镍释放测试，解决掉色过敏核心痛点', cost: '成本增加 ¥6-12/件', willingness: '用户愿意多付 $10-15' },
+        { priority: 'p1', title: '礼品级包装+运输保护', desc: '情人节送礼属性极强，升级礼盒+加固运输+食品类加冰袋，提升收货体验', cost: '成本增加 ¥4-8/件', willingness: '差评率降低 45%' },
+        { priority: 'p2', title: '精准尺码+详细参考', desc: '戒指、睡衣等提供精准美码+手指周长/身高体重参考表，降低退货率', cost: '无直接成本', willingness: '退货率降低 35%' },
+        { priority: 'p2', title: '天然材质+真实容量', desc: '香薰用天然精油、巧克力用纯可可脂，容量如实标注不夸大', cost: '成本增加 ¥3-5/件', willingness: '复购率提升 28%' },
+        { priority: 'p3', title: '个性化定制体验优化', desc: '刻字、照片等定制功能提升精度，增加预览功能，让用户有参与感', cost: '成本增加 ¥2/件', willingness: '客单价提升 18%' },
+      ],
+      combos: [
+        { name: '浪漫告白组合', items: ['永生花礼盒×1', '情侣对戒×1', '巧克力礼盒×1'], price: '$149.99', profit: '58%', reason: '情人节经典三件套，一站式解决送礼需求' },
+        { name: '精致女孩组合', items: ['香薰礼盒×1', '丝绸睡衣×1', 'LED相框×1'], price: '$99.99', profit: '56%', reason: '主打生活仪式感，适合送女生，客单价高' },
+        { name: '情侣配对组合', items: ['情侣项链×1', '情侣睡衣×1', '情侣马克杯×1'], price: '$89.99', profit: '54%', reason: '配对属性强，社交传播度高，适合年轻情侣' },
+      ],
+      keywords: [
+        { word: 'valentines day gifts for her', volume: 125000, trend: 412, competitors: 2800, cpc: 1.85, conversion: 8.2, competition: '高', recommend: '核心词' },
+        { word: 'preserved rose gift box', volume: 45000, trend: 356, competitors: 320, cpc: 1.25, conversion: 13.5, competition: '低', recommend: '必埋词' },
+        { word: 'couple rings personalized', volume: 38000, trend: 298, competitors: 280, cpc: 1.05, conversion: 12.8, competition: '低', recommend: '必埋词' },
+        { word: 'valentines day gift set', volume: 67000, trend: 267, competitors: 890, cpc: 1.15, conversion: 9.8, competition: '中', recommend: '推荐' },
+        { word: 'essential oil gift set for women', volume: 28000, trend: 234, competitors: 450, cpc: 0.85, conversion: 11.2, competition: '中', recommend: '推荐' },
+        { word: 'couple matching pajamas', volume: 35000, trend: 287, competitors: 520, cpc: 0.92, conversion: 10.5, competition: '中', recommend: '推荐' },
+        { word: 'chocolate gift box valentines', volume: 52000, trend: 198, competitors: 680, cpc: 1.08, conversion: 12.1, competition: '中', recommend: '推荐' },
+        { word: 'magnetic couple necklace', volume: 18000, trend: 213, competitors: 180, cpc: 0.65, conversion: 14.8, competition: '低', recommend: '蓝海词' },
+      ],
+      suppliers: [
+        { name: '昆明市某花卉公司', price: '¥22.5', moq: 200, delivery: '10天', score: 4.9, repurchase: '92%', custom: '支持花型定制', level: '金牌工厂' },
+        { name: '海丰县某珠宝厂', price: '¥18.5', moq: 100, delivery: '12天', score: 4.8, repurchase: '90%', custom: '支持刻字定制', level: '金牌工厂' },
+        { name: '广州市某香氛公司', price: '¥12.8', moq: 300, delivery: '8天', score: 4.7, repurchase: '87%', custom: '支持香味定制', level: '实力商家' },
+        { name: '东莞市某针织厂', price: '¥16.5', moq: 300, delivery: '12天', score: 4.6, repurchase: '85%', custom: '支持款式定制', level: '实力商家' },
+        { name: '义乌市某工艺品厂', price: '¥9.8', moq: 500, delivery: '7天', score: 4.7, repurchase: '88%', custom: '支持包装定制', level: '实力商家' },
+      ],
+      inventoryPlans: [
+        { name: '保守方案', quantity: '1,200件', cost: '¥3.60万', sellThrough: '98%', profit: '$2.10万', risk: '极低', desc: '情人节前小批量备货，售完即止' },
+        { name: '稳健方案（推荐）', quantity: '2,500件', cost: '¥6.80万', sellThrough: '93%', profit: '$4.25万', risk: '低', desc: '覆盖情人节前两周销售高峰，库存健康' },
+        { name: '激进方案', quantity: '4,500件', cost: '¥11.20万', sellThrough: '81%', profit: '$6.80万', risk: '中', desc: '全力冲情人节，但节后可能剩余850件需清仓' },
+      ],
+      certifications: [
+        { name: 'FDA食品接触认证', status: '已完成', desc: '巧克力、餐具类产品资质', date: '2026-12-01' },
+        { name: '镍释放测试报告', status: '已完成', desc: '珠宝类产品欧盟标准', date: '2026-12-05' },
+        { name: 'CPC儿童认证', status: '不适用', desc: '非儿童产品无需办理', date: '-' },
+        { name: '运输包装测试', status: '待办理', desc: '礼品类运输抗压测试', date: '预计2026-12-20完成' },
+      ],
+      patents: [
+        { type: '外观设计专利', risk: '中风险', desc: '珠宝款式、礼盒设计外观专利较多，需差异化', action: '建议原创设计，避免热门款式雷同' },
+        { type: '实用新型专利', risk: '低风险', desc: '磁吸、温感等技术有通用方案', action: '使用成熟公版方案' },
+        { type: '版权侵权', risk: '中风险', desc: '礼盒图案、照片框设计可能涉及版权', action: '使用原创设计元素' },
+      ],
+      multisiteData: [
+        { site: '美国站', volume: '125,000', competitors: 2800, price: '$59.99', rating: 4.1, ratio: 0.7, sales: '5,800', score: 91, level: '强烈推荐' },
+        { site: '英国站', volume: '38,000', competitors: 420, price: '£54.99', rating: 4.0, ratio: 0.5, sales: '1,800', score: 82, level: '推荐' },
+        { site: '加拿大站', volume: '22,000', competitors: 180, price: '$69.99', rating: 4.1, ratio: 0.4, sales: '1,050', score: 84, level: '推荐' },
+        { site: '澳大利亚站', volume: '18,000', competitors: 150, price: '$79.99', rating: 4.2, ratio: 0.4, sales: '880', score: 80, level: '推荐' },
+        { site: '德国站', volume: '15,000', competitors: 280, price: '€54.99', rating: 3.9, ratio: 0.7, sales: '720', score: 72, level: '可考虑' },
+        { site: '日本站', volume: '12,000', competitors: 95, price: '¥7,800', rating: 4.3, ratio: 0.3, sales: '620', score: 76, level: '可考虑' },
+      ],
+      trendData: { months: ['1月', '2月上旬', '2月中旬', '2月下旬', '3月'], search: [15000, 48000, 125000, 35000, 5000], sales: [800, 2500, 6800, 1200, 300] },
+      categoryData: [{ name: '礼品类', value: 38 }, { name: '珠宝类', value: 26 }, { name: '个护类', value: 16 }, { name: '服饰类', value: 12 }, { name: '食品类', value: 8 }],
+    },
+
+    '返校季 2026': {
+      kpi: { products: 178, avgScore: 71.5, highGrowth: 25, blueOcean: 32, painTotal: 2056, commonPain: 28, improve: 17, accuracy: 91.2 },
+      products: [
+        { id: 1, name: '大容量学生书包（USB充电款）', category: '箱包类 · 学生书包', score: 90, growth: 324, competitors: 234, price: '$39.99', profit: '48%', threshold: '低', pain: '拉链坏、肩带痛', painDetails: ['拉链用了一个月就坏了', '书装多了肩带勒肩膀痛', 'USB口是摆设充不了电'], improve: 'YKK防爆拉链、加厚减压肩带、真实可用USB接口' },
+        { id: 2, name: '学生笔记本电脑（轻薄本）', category: '电子类 · 电脑设备', score: 88, growth: 287, competitors: 156, price: '$299.99', profit: '22%', threshold: '高', pain: '卡顿、续航短', painDetails: ['开几个网页就卡', '标称8小时实际3小时', '屏幕素质差泛白'], improve: '升级内存SSD、真实8小时续航、高色域IPS屏' },
+        { id: 3, name: '文具套装（开学大礼包）', category: '文具类 · 学生文具', score: 85, growth: 256, competitors: 312, price: '$24.99', profit: '55%', threshold: '低', pain: '笔断墨、尺子脆', painDetails: ['中性笔写一半就断墨', '尺子一掰就断，太脆了', '橡皮掉渣严重'], improve: '进口油墨笔芯、柔韧PC材质、无屑橡皮配方' },
+        { id: 4, name: '学生保温杯（大容量）', category: '家居类 · 水具', score: 83, growth: 213, competitors: 267, price: '$22.99', profit: '52%', threshold: '低', pain: '不保温、漏水', painDetails: ['2小时就凉了，根本不保温', '放包里漏水，书本全湿了', '杯盖难打开'], improve: '316不锈钢双层真空、硅胶密封圈防漏、一键弹盖' },
+        { id: 5, name: '护眼台灯（学生专用）', category: '家居类 · 照明灯具', score: 81, growth: 198, competitors: 189, price: '$34.99', profit: '45%', threshold: '低', pain: '频闪、亮度不够', painDetails: ['用久了眼睛酸，有频闪', '最亮还是不够亮', '底座不稳容易倒'], improve: '无频闪RG0豁免级、国AA级照度、加重防滑底座' },
+        { id: 6, name: '学生计算器（科学函数款）', category: '文具类 · 学习工具', score: 79, growth: 167, competitors: 145, price: '$18.99', profit: '50%', threshold: '低', pain: '按键失灵、屏幕暗', painDetails: ['按键按了没反应，要使劲按', '屏幕太暗，教室看不清', '电池不耐用'], improve: '硅胶按键手感优化、高清背光屏、低功耗长续航' },
+        { id: 7, name: '宿舍收纳盒套装', category: '家居类 · 收纳整理', score: 76, growth: 154, competitors: 234, price: '$29.99', profit: '58%', threshold: '低', pain: '塑料薄、尺寸不准', painDetails: ['塑料太薄，装重物就变形', '标称尺寸和实际差很多', '抽屉拉出来卡住'], improve: '加厚PP材质、精准尺寸、顺滑导轨设计' },
+        { id: 8, name: '学生运动水壶（吸管款）', category: '运动类 · 户外水具', score: 73, growth: 142, competitors: 289, price: '$16.99', profit: '55%', threshold: '低', pain: '吸嘴漏、有异味', painDetails: ['倒过来就漏水，吸嘴密封差', '新杯子有很重的塑料味', '吸管难清洗'], improve: '防漏吸嘴阀门、Tritan食品级材质、可拆卸吸管' },
+      ],
+      painDimensions: [
+        { name: '产品质量', count: 723, percent: 80, top: '拉链坏、笔断墨、塑料薄' },
+        { name: '功能体验', count: 612, percent: 74, top: '不保温、续航短、按键失灵' },
+        { name: '规格适配', count: 456, percent: 58, top: '容量不足、尺寸不准、书本放不下' },
+        { name: '场景适配', count: 387, percent: 50, top: '书包太重、宿舍空间小、教室光线暗' },
+        { name: '包装物流', count: 234, percent: 32, top: '运输压变形、配件缺失、包装简陋' },
+        { name: '合规安全', count: 178, percent: 26, top: '材质安全、护眼认证、食品接触' },
+      ],
+      reviews: [
+        { stars: 2, date: '2026-08-20', product: '学生书包', text: 'Zipper broke after one month of use. Shoulder straps hurt when loaded with books. The USB port is fake, doesnt charge anything.', textZh: '用了一个月拉链就坏了。装书多了肩带勒得肩膀痛。USB口是假的，根本充不了电。', tags: ['拉链坏', '肩带痛', 'USB假'] },
+        { stars: 1, date: '2026-08-17', product: '轻薄笔记本', text: 'Lags with just a few tabs open. Battery lasts 3 hours max, not 8 as advertised. Screen is washed out and terrible.', textZh: '开几个标签页就卡。电池最多3小时，不是宣传的8小时。屏幕泛白特别差。', tags: ['卡顿', '续航短', '屏幕差'] },
+        { stars: 2, date: '2026-08-14', product: '文具套装', text: 'Pens stop writing halfway through. Ruler snapped the first time I used it. Eraser leaves crumbs everywhere. Total waste.', textZh: '笔写一半就断墨。尺子第一次用就断了。橡皮掉渣掉得到处都是。太浪费了。', tags: ['断墨', '尺子脆', '橡皮差'] },
+        { stars: 3, date: '2026-08-11', product: '保温杯', text: 'Only stays hot for 2 hours, not 12. Leaked in my bag and ruined my notebooks. Lid is hard to open with one hand.', textZh: '只保温2小时，不是12小时。放包里漏水，把笔记本都毁了。杯盖单手很难打开。', tags: ['不保温', '漏水', '杯盖难开'] },
+        { stars: 2, date: '2026-08-08', product: '护眼台灯', text: 'My eyes hurt after studying for an hour, definitely has flicker. Even on brightest setting its too dim. Base tips over easily.', textZh: '学习一小时眼睛就酸，肯定有频闪。最亮档还是太暗。底座很容易倒。', tags: ['频闪', '亮度暗', '底座不稳'] },
+        { stars: 1, date: '2026-08-05', product: '运动水壶', text: 'Leaks when tipped over, the spout seal is bad. Strong plastic smell when new. Straw is impossible to clean properly.', textZh: '倒过来就漏水，吸嘴密封差。新杯子有很重的塑料味。吸管根本洗不干净。', tags: ['漏水', '有异味', '难清洗'] },
+      ],
+      improvements: [
+        { priority: 'p1', title: '耐用性升级', desc: '书包用YKK拉链、文具用进口油墨、收纳盒用加厚塑料，解决学生群体高频使用的耐用性痛点', cost: '成本增加 ¥3-8/件', willingness: '复购率提升 35%' },
+        { priority: 'p1', title: '真实参数不夸大', desc: '保温时长、电池续航、容量等核心参数如实标注，避免学生用户收到后落差大', cost: '无直接成本', willingness: '差评率降低 40%' },
+        { priority: 'p2', title: '人体工学减负设计', desc: '书包用减压肩带、台灯用无频闪护眼、水杯用一键开盖，提升使用舒适度', cost: '成本增加 ¥4-6/件', willingness: '用户愿意多付 $5-8' },
+        { priority: 'p2', title: '防漏密封设计', desc: '水杯、保温杯等升级硅胶密封圈，解决漏水毁书本的核心痛点', cost: '成本增加 ¥1-2/件', willingness: '好评率提升 28%' },
+        { priority: 'p3', title: '套装搭配优化', desc: '文具套装、收纳套装等根据真实使用场景搭配，避免凑数无用产品', cost: '成本调整', willingness: '客单价提升 15%' },
+      ],
+      combos: [
+        { name: '开学必备组合', items: ['学生书包×1', '文具套装×1', '保温杯×1'], price: '$79.99', profit: '50%', reason: '开学一站式采购，家长用户决策成本低' },
+        { name: '宿舍生活组合', items: ['收纳盒套装×1', '护眼台灯×1', '运动水壶×1'], price: '$69.99', profit: '52%', reason: '住校生宿舍场景全覆盖，客单价高' },
+        { name: '学霸装备组合', items: ['护眼台灯×1', '科学计算器×1', '文具套装×1'], price: '$64.99', profit: '48%', reason: '学习场景组合，主打学习效率提升' },
+      ],
+      keywords: [
+        { word: 'back to school supplies 2026', volume: 156000, trend: 423, competitors: 3500, cpc: 1.65, conversion: 7.5, competition: '高', recommend: '核心词' },
+        { word: 'school backpack for teens', volume: 89000, trend: 324, competitors: 1200, cpc: 1.15, conversion: 9.8, competition: '高', recommend: '核心词' },
+        { word: 'laptop for students college', volume: 67000, trend: 287, competitors: 560, cpc: 2.25, conversion: 8.5, competition: '中', recommend: '必埋词' },
+        { word: 'school supplies bundle', volume: 45000, trend: 256, competitors: 680, cpc: 0.95, conversion: 11.2, competition: '中', recommend: '推荐' },
+        { word: 'insulated water bottle for school', volume: 52000, trend: 213, competitors: 890, cpc: 0.88, conversion: 10.5, competition: '中', recommend: '推荐' },
+        { word: 'desk lamp for students eye care', volume: 28000, trend: 198, competitors: 320, cpc: 0.78, conversion: 12.8, competition: '低', recommend: '必埋词' },
+        { word: 'scientific calculator for college', volume: 35000, trend: 167, competitors: 280, cpc: 0.65, conversion: 13.5, competition: '低', recommend: '推荐' },
+        { word: 'dorm room storage organizer', volume: 22000, trend: 154, competitors: 450, cpc: 0.72, conversion: 11.8, competition: '中', recommend: '推荐' },
+      ],
+      suppliers: [
+        { name: '广州市某箱包厂', price: '¥16.5', moq: 300, delivery: '12天', score: 4.8, repurchase: '91%', custom: '支持LOGO定制', level: '金牌工厂' },
+        { name: '深圳市某电子科技', price: '¥185.0', moq: 100, delivery: '25天', score: 4.7, repurchase: '88%', custom: '支持配置定制', level: '金牌工厂' },
+        { name: '义乌市某文具厂', price: '¥8.5', moq: 1000, delivery: '7天', score: 4.6, repurchase: '85%', custom: '支持图案定制', level: '实力商家' },
+        { name: '永康市某杯业公司', price: '¥9.8', moq: 500, delivery: '10天', score: 4.7, repurchase: '87%', custom: '支持颜色定制', level: '实力商家' },
+        { name: '中山市某照明公司', price: '¥14.2', moq: 300, delivery: '12天', score: 4.8, repurchase: '89%', custom: '支持功能定制', level: '金牌工厂' },
+      ],
+      inventoryPlans: [
+        { name: '保守方案', quantity: '2,000件', cost: '¥4.20万', sellThrough: '97%', profit: '$2.45万', risk: '极低', desc: '开学前小批量备货，售完即止' },
+        { name: '稳健方案（推荐）', quantity: '4,000件', cost: '¥7.80万', sellThrough: '92%', profit: '$4.80万', risk: '低', desc: '覆盖8-9月开学季销售，库存周转健康' },
+        { name: '激进方案', quantity: '7,000件', cost: '¥12.60万', sellThrough: '80%', profit: '$7.50万', risk: '中', desc: '全力冲开学季，但节后可能剩余1400件' },
+      ],
+      certifications: [
+        { name: 'CPC儿童产品认证', status: '已完成', desc: '学生用品强制认证', date: '2026-06-15' },
+        { name: 'FDA食品接触认证', status: '已完成', desc: '水杯类产品资质', date: '2026-06-20' },
+        { name: 'RG0护眼认证', status: '已完成', desc: '台灯类护眼标准', date: '2026-07-01' },
+        { name: ' Prop65加州认证', status: '待办理', desc: '加州市场有害物质限制', date: '预计2026-07-20完成' },
+      ],
+      patents: [
+        { type: '外观设计专利', risk: '低风险', desc: '学生用品外观设计通用性强', action: '保持原创设计即可' },
+        { type: '实用新型专利', risk: '中风险', desc: '书包USB充电、台灯护眼等技术有专利', action: '使用成熟公版方案' },
+        { type: '商标侵权', risk: '低风险', desc: '避免使用知名学校、品牌标识', action: '使用自有品牌设计' },
+      ],
+      multisiteData: [
+        { site: '美国站', volume: '156,000', competitors: 3500, price: '$39.99', rating: 4.1, ratio: 0.8, sales: '7,200', score: 90, level: '强烈推荐' },
+        { site: '英国站', volume: '42,000', competitors: 580, price: '£34.99', rating: 4.0, ratio: 0.6, sales: '2,100', score: 80, level: '推荐' },
+        { site: '加拿大站', volume: '28,000', competitors: 280, price: '$44.99', rating: 4.1, ratio: 0.5, sales: '1,350', score: 82, level: '推荐' },
+        { site: '澳大利亚站', volume: '22,000', competitors: 220, price: '$49.99', rating: 4.2, ratio: 0.4, sales: '1,050', score: 78, level: '推荐' },
+        { site: '德国站', volume: '18,000', competitors: 320, price: '€34.99', rating: 3.9, ratio: 0.7, sales: '850', score: 70, level: '可考虑' },
+        { site: '日本站', volume: '15,000', competitors: 180, price: '¥4,980', rating: 4.3, ratio: 0.4, sales: '780', score: 76, level: '可考虑' },
+      ],
+      trendData: { months: ['6月', '7月', '8月', '9月', '10月'], search: [12000, 35000, 98000, 125000, 18000], sales: [600, 1800, 6500, 9200, 1200] },
+      categoryData: [{ name: '箱包类', value: 28 }, { name: '文具类', value: 26 }, { name: '电子类', value: 18 }, { name: '家居类', value: 16 }, { name: '运动类', value: 12 }],
+    },
+
+    '实时飙升趋势': {
+      kpi: { products: 89, avgScore: 78.2, highGrowth: 45, blueOcean: 52, painTotal: 1234, commonPain: 18, improve: 12, accuracy: 89.5 },
+      products: [
+        { id: 1, name: '便携榨汁杯（无线充电款）', category: '个护类 · 厨房小电', score: 94, growth: 567, competitors: 123, price: '$29.99', profit: '52%', threshold: '低', pain: '动力弱、难清洗', painDetails: ['冰块打不碎，动力太弱', '刀片底下藏渣，洗不干净', '电池用几次就不行了'], improve: '强扭矩电机、可拆卸刀片、大容量电池' },
+        { id: 2, name: '手机散热器（半导体制冷）', category: '电子类 · 手机配件', score: 92, growth: 489, competitors: 89, price: '$24.99', profit: '55%', threshold: '低', pain: '制冷差、夹不紧', painDetails: ['玩游戏还是烫，制冷效果差', '夹在手机上容易掉', '风扇噪音大'], improve: '升级半导体制冷片、加固弹簧夹、静音风扇' },
+        { id: 3, name: '折叠手机支架（铝合金）', category: '电子类 · 手机配件', score: 89, growth: 423, competitors: 234, price: '$19.99', profit: '58%', threshold: '低', pain: '不稳、角度少', painDetails: ['放手机就倒，底座太轻', '调节角度太少，不能平躺', '铰链松动'], improve: '加重铝合金底座、多档位调节、加固铰链' },
+        { id: 4, name: '迷你挂脖风扇', category: '个护类 · 消暑电器', score: 87, growth: 398, competitors: 312, price: '$22.99', profit: '50%', threshold: '低', pain: '风力小、续航短', painDetails: ['风力太小，几乎感觉不到', '续航只有2小时，标称6小时', '挂脖子重，累'], improve: '涡轮大风机、真实6小时续航、轻量化设计' },
+        { id: 5, name: '桌面加湿器（USB迷你）', category: '家居类 · 生活电器', score: 84, growth: 356, competitors: 198, price: '$16.99', profit: '56%', threshold: '低', pain: '噪音大、漏水', painDetails: ['晚上用噪音大，影响睡觉', '倒过来就漏水', '雾量太小没效果'], improve: '静音超声波、防漏设计、大雾量雾化片' },
+        { id: 6, name: '蓝牙自拍杆（三脚架款）', category: '电子类 · 拍照配件', score: 81, growth: 312, competitors: 267, price: '$27.99', profit: '52%', threshold: '低', pain: '蓝牙断、支架晃', painDetails: ['蓝牙经常断连，要重新配对', '三脚架不稳，风一吹就倒', '手机夹不紧'], improve: '蓝牙5.0稳定连接、加固三脚架、防滑手机夹' },
+        { id: 7, name: '便携睫毛卷翘器（电热款）', category: '美妆类 · 美妆工具', score: 78, growth: 287, competitors: 145, price: '$18.99', profit: '60%', threshold: '低', pain: '温度低、伤睫毛', painDetails: ['温度不够，卷翘不持久', '用久了睫毛掉得厉害', '充电口设计不合理'], improve: '恒温控温、负离子护发、Type-C充电口' },
+        { id: 8, name: '硅胶冰格（带盖易脱模）', category: '家居类 · 厨房用品', score: 75, growth: 256, competitors: 289, price: '$14.99', profit: '62%', threshold: '低', pain: '脱模难、有异味', painDetails: ['冰块抠半天抠不出来', '新冰格有很重的硅胶味', '盖子密封差，串味'], improve: '软底易脱模设计、食品级无异味硅胶、密封防串味盖' },
+      ],
+      painDimensions: [
+        { name: '产品质量', count: 423, percent: 76, top: '电池衰减、铰链松动、材质差' },
+        { name: '功能体验', count: 387, percent: 72, top: '动力弱、制冷差、风力小' },
+        { name: '规格适配', count: 234, percent: 48, top: '尺寸偏大、手机不兼容、容量小' },
+        { name: '场景适配', count: 298, percent: 55, top: '噪音影响、便携性差、使用不便' },
+        { name: '包装物流', count: 156, percent: 30, top: '运输破损、配件缺失、包装简陋' },
+        { name: '合规安全', count: 123, percent: 25, top: '电池安全、材质安全、温度控制' },
+      ],
+      reviews: [
+        { stars: 2, date: '2026-08-28', product: '便携榨汁杯', text: 'Cant even blend ice, motor is too weak. Gunk gets stuck under the blades, impossible to clean. Battery died after 5 uses.', textZh: '冰块都打不碎，电机太弱了。刀片底下藏渣，根本洗不干净。用了5次电池就不行了。', tags: ['动力弱', '难清洗', '电池差'] },
+        { stars: 1, date: '2026-08-25', product: '手机散热器', text: 'Phone still gets hot while gaming, cooling is minimal. Falls off easily, the clamp is weak. Fan is so loud I can hear it over my game.', textZh: '玩游戏手机还是烫，制冷效果微乎其微。很容易掉，夹子太松。风扇声音大到盖过游戏声。', tags: ['制冷差', '夹不紧', '噪音大'] },
+        { stars: 2, date: '2026-08-22', product: '挂脖风扇', text: 'Wind is so weak I can barely feel it. Battery lasts 2 hours not 6. Its heavy and hurts my neck after 30 minutes.', textZh: '风力小到几乎感觉不到。电池只有2小时不是6小时。很重，戴30分钟脖子就痛。', tags: ['风力小', '续航短', '太重'] },
+        { stars: 3, date: '2026-08-19', product: '桌面加湿器', text: 'Noisy at night, keeps me awake. Leaks if you tip it over. Mist output is tiny, does nothing for room humidity.', textZh: '晚上用很吵，睡不着。倒过来就漏水。雾量太小，对房间湿度根本没作用。', tags: ['噪音大', '漏水', '雾量小'] },
+        { stars: 2, date: '2026-08-16', product: '自拍杆', text: 'Bluetooth disconnects constantly, have to repair every time. Tripod is wobbly, falls over in light wind. Phone clamp is loose.', textZh: '蓝牙老是断，每次都要重新配对。三脚架晃，小风就倒。手机夹很松。', tags: ['蓝牙断', '支架晃', '夹不紧'] },
+        { stars: 1, date: '2026-08-13', product: '硅胶冰格', text: 'Ice cubes are impossible to get out, have to pry them. Strong silicone smell that transfers to the ice. Lid doesnt seal, everything smells like freezer.', textZh: '冰块根本抠不出来，得使劲撬。很重的硅胶味，都传到冰块里了。盖子不密封，全是冰箱味。', tags: ['脱模难', '有异味', '密封差'] },
+      ],
+      improvements: [
+        { priority: 'p1', title: '核心性能升级', desc: '榨汁杯加大电机扭矩、散热器升级制冷片、风扇加大风机，解决核心功能不满', cost: '成本增加 ¥5-10/件', willingness: '用户愿意多付 $5-10' },
+        { priority: 'p1', title: '真实续航标注', desc: '所有带电池产品如实标注续航时间，避免虚标导致的差评', cost: '无直接成本', willingness: '差评率降低 35%' },
+        { priority: 'p2', title: '静音设计优化', desc: '风扇、加湿器等产品升级静音电机，解决噪音影响使用的痛点', cost: '成本增加 ¥2-4/件', willingness: '好评率提升 25%' },
+        { priority: 'p2', title: '易清洗/易使用设计', desc: '榨汁杯可拆卸刀片、冰格软底脱模，提升使用便利性', cost: '成本增加 ¥1-3/件', willingness: '复购率提升 20%' },
+        { priority: 'p3', title: '轻量化便携设计', desc: '挂脖风扇、自拍杆等便携产品减重，提升长时间使用舒适度', cost: '成本增加 ¥2/件', willingness: '用户愿意多付 $3-5' },
+      ],
+      combos: [
+        { name: '夏日消暑组合', items: ['挂脖风扇×1', '便携榨汁杯×1', '迷你加湿器×1'], price: '$59.99', profit: '52%', reason: '夏季消暑场景全覆盖，应季热销' },
+        { name: '手游装备组合', items: ['手机散热器×1', '折叠支架×1', '自拍杆×1'], price: '$59.99', profit: '55%', reason: '手游/直播用户场景，客单价高' },
+        { name: '桌面好物组合', items: ['折叠支架×1', '迷你加湿器×1', '硅胶冰格×1'], price: '$44.99', profit: '58%', reason: '办公桌场景组合，提升生活品质' },
+      ],
+      keywords: [
+        { word: 'portable blender usb rechargeable', volume: 78000, trend: 567, competitors: 320, cpc: 0.85, conversion: 12.5, competition: '低', recommend: '必埋词' },
+        { word: 'phone cooler for gaming', volume: 56000, trend: 489, competitors: 180, cpc: 0.75, conversion: 14.2, competition: '低', recommend: '必埋词' },
+        { word: 'adjustable phone stand aluminum', volume: 45000, trend: 423, competitors: 560, cpc: 0.65, conversion: 11.8, competition: '中', recommend: '推荐' },
+        { word: 'neck fan portable rechargeable', volume: 67000, trend: 398, competitors: 780, cpc: 0.72, conversion: 10.5, competition: '中', recommend: '推荐' },
+        { word: 'mini humidifier usb desktop', volume: 38000, trend: 356, competitors: 450, cpc: 0.58, conversion: 11.2, competition: '中', recommend: '推荐' },
+        { word: 'bluetooth selfie stick tripod', volume: 32000, trend: 312, competitors: 620, cpc: 0.68, conversion: 9.8, competition: '中', recommend: '推荐' },
+        { word: 'heated eyelash curler rechargeable', volume: 18000, trend: 287, competitors: 120, cpc: 0.52, conversion: 13.5, competition: '低', recommend: '蓝海词' },
+        { word: 'silicone ice cube tray with lid', volume: 25000, trend: 256, competitors: 380, cpc: 0.48, conversion: 12.1, competition: '中', recommend: '推荐' },
+      ],
+      suppliers: [
+        { name: '深圳市某电子科技', price: '¥12.5', moq: 200, delivery: '8天', score: 4.8, repurchase: '90%', custom: '支持功能定制', level: '金牌工厂' },
+        { name: '东莞市某五金厂', price: '¥8.5', moq: 500, delivery: '7天', score: 4.7, repurchase: '88%', custom: '支持颜色定制', level: '实力商家' },
+        { name: '中山市某电器厂', price: '¥9.8', moq: 300, delivery: '10天', score: 4.6, repurchase: '85%', custom: '支持外观定制', level: '实力商家' },
+        { name: '广州市某美妆工具厂', price: '¥6.5', moq: 500, delivery: '7天', score: 4.7, repurchase: '87%', custom: '支持包装定制', level: '实力商家' },
+        { name: '义乌市某日用品厂', price: '¥4.2', moq: 1000, delivery: '5天', score: 4.6, repurchase: '84%', custom: '支持图案定制', level: '实力商家' },
+      ],
+      inventoryPlans: [
+        { name: '保守方案', quantity: '1,500件', cost: '¥1.80万', sellThrough: '98%', profit: '$1.35万', risk: '极低', desc: '趋势品小批量试款，快速反应' },
+        { name: '稳健方案（推荐）', quantity: '3,000件', cost: '¥3.30万', sellThrough: '92%', profit: '$2.58万', risk: '低', desc: '抓住趋势窗口期，覆盖1-2个月销售' },
+        { name: '激进方案', quantity: '6,000件', cost: '¥6.00万', sellThrough: '75%', profit: '$4.20万', risk: '中', desc: '全力冲趋势爆款，但趋势消退后可能剩余1500件' },
+      ],
+      certifications: [
+        { name: 'FCC认证', status: '已完成', desc: '电子产品强制认证', date: '2026-07-01' },
+        { name: 'FDA食品接触认证', status: '已完成', desc: '榨汁杯、冰格类资质', date: '2026-07-05' },
+        { name: '电池UN38.3认证', status: '已完成', desc: '带电池产品运输认证', date: '2026-07-10' },
+        { name: 'RoHS认证', status: '待办理', desc: '欧盟环保认证', date: '预计2026-09-01完成' },
+      ],
+      patents: [
+        { type: '实用新型专利', risk: '中风险', desc: '半导体制冷、便携榨汁等技术有专利布局', action: '使用公版方案，避免核心专利' },
+        { type: '外观设计专利', risk: '低风险', desc: '趋势品外观更新快，通用性强', action: '保持微创新设计' },
+        { type: '商标侵权', risk: '低风险', desc: '避免使用品牌类似名称', action: '注册自有商标' },
+      ],
+      multisiteData: [
+        { site: '美国站', volume: '78,000', competitors: 320, price: '$29.99', rating: 4.0, ratio: 0.6, sales: '4,500', score: 94, level: '强烈推荐' },
+        { site: '英国站', volume: '22,000', competitors: 120, price: '£26.99', rating: 4.1, ratio: 0.4, sales: '1,200', score: 85, level: '推荐' },
+        { site: 'TikTok Shop美国', volume: '65,000', competitors: 280, price: '$24.99', rating: 3.9, ratio: 0.5, sales: '5,200', score: 92, level: '强烈推荐' },
+        { site: '加拿大站', volume: '15,000', competitors: 80, price: '$34.99', rating: 4.0, ratio: 0.3, sales: '850', score: 82, level: '推荐' },
+        { site: '澳大利亚站', volume: '18,000', competitors: 95, price: '$36.99', rating: 4.1, ratio: 0.3, sales: '980', score: 80, level: '推荐' },
+        { site: '德国站', volume: '12,000', competitors: 150, price: '€26.99', rating: 3.8, ratio: 0.6, sales: '620', score: 72, level: '可考虑' },
+      ],
+      trendData: { months: ['5月', '6月', '7月', '8月', '9月'], search: [8000, 25000, 58000, 78000, 45000], sales: [500, 1800, 4500, 6800, 3200] },
+      categoryData: [{ name: '电子配件', value: 38 }, { name: '个护小电', value: 28 }, { name: '家居用品', value: 18 }, { name: '美妆工具', value: 10 }, { name: '其他', value: 6 }],
+    },
+  };
+
+  // 获取基础数据集
+  let base = datasets[event] || datasets['万圣节 2026'];
+
+  // 应用平台和地区系数调整
+  const adjustedProducts = base.products.map(p => ({
+    ...p,
+    price: adjPrice(p.price),
+    profit: adjProfit(p.profit),
+    competitors: adjComp(p.competitors),
+  }));
+
+  const adjustedKeywords = base.keywords.map(k => ({
+    ...k,
+    volume: adjVol(k.volume),
+    competitors: adjComp(k.competitors),
+    cpc: (k.cpc * pf.cpcMul).toFixed(2),
+  }));
+
+  const adjustedMultisite = base.multisiteData.map(m => ({
+    ...m,
+    volume: (parseInt(m.volume.replace(/,/g,'')) * rf.volumeMul).toLocaleString(),
+    competitors: adjComp(m.competitors),
+  }));
+
+  return {
+    ...base,
+    products: adjustedProducts,
+    keywords: adjustedKeywords,
+    multisiteData: adjustedMultisite,
+    event, platform, region,
+  };
+}
+
+// ===== 渲染函数（使用当前数据集） =====
+function renderProductTable() {
+  const tbody = document.getElementById('productTableBody');
+  tbody.innerHTML = currentData.products.map(p => {
+    const scoreClass = p.score >= 85 ? 'high' : p.score >= 70 ? 'mid' : 'low';
+    const thresholdClass = p.threshold === '低' ? 'green' : p.threshold === '中' ? 'amber' : 'red';
+    return `
+      <tr onclick="openProductModal(${p.id})">
+        <td><div class="score-ring ${scoreClass}" style="--p: ${p.score}%"><span>${p.score}</span></div></td>
+        <td>
+          <div class="product-name">${p.name}</div>
+          <div class="product-category">${p.category}</div>
+        </td>
+        <td><span class="growth-up">+${p.growth}%</span></td>
+        <td class="mono">${p.competitors}</td>
+        <td class="mono">${p.price}</td>
+        <td><span class="tag green">${p.profit}</span></td>
+        <td><span class="tag ${thresholdClass}">${p.threshold}</span></td>
+        <td style="max-width: 160px; font-size: 12px; color: var(--red-500);">${p.pain}</td>
+        <td><button class="btn" style="padding: 4px 10px; font-size: 11px;">详情</button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ===== 渲染痛点维度 =====
+function renderPainDimensions() {
+  const grid = document.getElementById('painDimensionGrid');
+  grid.innerHTML = currentData.painDimensions.map(d => `
+    <div class="pain-dim-card">
+      <div class="pain-dim-header">
+        <span class="pain-dim-name">${d.name}</span>
+        <span class="pain-dim-count">${d.count}条</span>
+      </div>
+      <div class="pain-bar"><div class="pain-bar-fill" style="width: ${d.percent}%"></div></div>
+      <div class="pain-top-item">高频问题：${d.top}</div>
+    </div>
+  `).join('');
+}
+
+// ===== 渲染差评列表 =====
+function renderReviews() {
+  const list = document.getElementById('reviewList');
+  list.innerHTML = currentData.reviews.map(r => `
+    <div class="review-item">
+      <div class="review-header">
+        <span class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+        <span class="review-meta">${r.product} · ${r.date}</span>
+      </div>
+      <div class="review-text review-text-en">${r.text}</div>
+      <div class="review-text review-text-zh">${r.textZh}</div>
+      <div class="review-tags">${r.tags.map(t => `<span class="tag red">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+// ===== 渲染改进建议 =====
+function renderImprovements() {
+  const list = document.getElementById('improvementList');
+  list.innerHTML = currentData.improvements.map((imp, i) => `
+    <div class="improvement-item">
+      <div class="improvement-priority ${imp.priority}">P${i+1}</div>
+      <div class="improvement-content">
+        <div class="improvement-title">${imp.title}</div>
+        <div class="improvement-desc">${imp.desc}</div>
+        <div class="improvement-meta">
+          <span>成本：${imp.cost}</span>
+          <span>价值：<strong>${imp.willingness}</strong></span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== 渲染选品组合 =====
+function renderCombos() {
+  const list = document.getElementById('comboList');
+  list.innerHTML = currentData.combos.map(c => `
+    <div style="border: 1px solid var(--border); border-radius: 10px; padding: 20px; background: var(--bg-50);">
+      <div style="font-size: 16px; font-weight: 700; color: var(--navy-900); margin-bottom: 12px;">${c.name}</div>
+      <div style="margin-bottom: 16px;">
+        ${c.items.map(i => `<div style="font-size: 13px; color: var(--text-700); padding: 4px 0; display: flex; align-items: center; gap: 8px;"><span style="width: 6px; height: 6px; background: var(--amber-500); border-radius: 50%;"></span>${i}</div>`).join('')}
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border);">
+        <div>
+          <div style="font-size: 11px; color: var(--text-500);">组合售价</div>
+          <div style="font-size: 20px; font-weight: 900; color: var(--amber-500); font-family: 'JetBrains Mono', monospace;">${c.price}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 11px; color: var(--text-500);">利润率</div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--green-500);">${c.profit}</div>
+        </div>
+      </div>
+      <div style="margin-top: 12px; font-size: 12px; color: var(--text-500); background: #fff; padding: 10px; border-radius: 6px;">${c.reason}</div>
+    </div>
+  `).join('');
+}
+
+// 渲染关键词表格
+function renderKeywordTable() {
+  const tbody = document.getElementById('keywordTableBody');
+  tbody.innerHTML = currentData.keywords.map(k => {
+    const compClass = k.competition === '低' ? 'green' : k.competition === '中' ? 'amber' : 'red';
+    const recClass = k.recommend === '必埋词' ? 'red' : k.recommend === '蓝海词' ? 'green' : k.recommend === '核心词' ? 'navy' : 'blue';
+    return `
+      <tr>
+        <td style="font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${k.word}</td>
+        <td class="mono">${k.volume.toLocaleString()}</td>
+        <td><span class="growth-up">+${k.trend}%</span></td>
+        <td class="mono">${k.competitors}</td>
+        <td class="mono">$${k.cpc}</td>
+        <td class="mono">${k.conversion}%</td>
+        <td><span class="tag ${compClass}">${k.competition}</span></td>
+        <td><span class="tag ${recClass}">${k.recommend}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// 渲染供应商表格
+function renderSupplierTable() {
+  const tbody = document.getElementById('supplierTableBody');
+  tbody.innerHTML = currentData.suppliers.map(s => `
+    <tr>
+      <td>
+        <div style="font-weight: 600;">${s.name}</div>
+        <div style="font-size: 11px; color: var(--text-500);">${s.level}</div>
+      </td>
+      <td class="mono" style="color: var(--green-500); font-weight: 700;">${s.price}</td>
+      <td class="mono">${s.moq}</td>
+      <td class="mono">${s.delivery}</td>
+      <td><span class="tag amber">★ ${s.score}</span></td>
+      <td class="mono">${s.repurchase}</td>
+      <td style="font-size: 12px;">${s.custom}</td>
+      <td><button class="btn" style="padding: 4px 10px; font-size: 11px;">联系</button></td>
+    </tr>
+  `).join('');
+}
+
+// 渲染备货方案
+function renderInventoryPlans() {
+  const list = document.getElementById('inventoryPlanList');
+  list.innerHTML = currentData.inventoryPlans.map((p, i) => `
+    <div style="border: 2px solid ${i === 1 ? 'var(--amber-500)' : 'var(--border)'}; border-radius: 8px; padding: 14px; background: ${i === 1 ? 'var(--amber-100)' : '#fff'};">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-weight: 700; color: var(--navy-900);">${p.name}</span>
+        ${i === 1 ? '<span class="tag amber">推荐</span>' : ''}
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; margin-bottom: 8px;">
+        <span style="color: var(--text-500);">备货量：<strong class="mono" style="color: var(--text-900);">${p.quantity}</strong></span>
+        <span style="color: var(--text-500);">采购成本：<strong class="mono" style="color: var(--text-900);">${p.cost}</strong></span>
+        <span style="color: var(--text-500);">售罄率：<strong style="color: var(--green-500);">${p.sellThrough}</strong></span>
+        <span style="color: var(--text-500);">净利润：<strong style="color: var(--green-500);">${p.profit}</strong></span>
+      </div>
+      <div style="font-size: 11px; color: var(--text-500);">${p.desc}</div>
+    </div>
+  `).join('');
+}
+
+// 渲染认证清单
+function renderCertList() {
+  const list = document.getElementById('certList');
+  list.innerHTML = currentData.certifications.map(c => `
+    <div style="display: flex; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: ${c.status === '已完成' ? 'var(--green-100)' : 'var(--amber-100)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <span style="color: ${c.status === '已完成' ? 'var(--green-500)' : '#92400E'}; font-weight: 700; font-size: 14px;">${c.status === '已完成' ? '✓' : '!'}</span>
+      </div>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; font-size: 13px; color: var(--navy-900); margin-bottom: 2px;">${c.name}</div>
+        <div style="font-size: 12px; color: var(--text-500); margin-bottom: 4px;">${c.desc}</div>
+        <div style="font-size: 11px; color: ${c.status === '已完成' ? 'var(--green-500)' : '#92400E'};">${c.status} · ${c.date}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 渲染专利风险
+function renderPatentList() {
+  const list = document.getElementById('patentList');
+  list.innerHTML = currentData.patents.map(p => {
+    const riskClass = p.risk === '高风险' ? 'red' : p.risk === '中风险' ? 'amber' : 'green';
+    return `
+      <div style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-weight: 600; font-size: 13px; color: var(--navy-900);">${p.type}</span>
+          <span class="tag ${riskClass}">${p.risk}</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-700); margin-bottom: 6px; line-height: 1.5;">${p.desc}</div>
+        <div style="font-size: 11px; color: var(--blue-500); background: var(--blue-100); padding: 6px 10px; border-radius: 4px;">应对建议：${p.action}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 渲染跨站点表格
+function renderMultisiteTable() {
+  const tbody = document.getElementById('multisiteTableBody');
+  tbody.innerHTML = currentData.multisiteData.map(m => {
+    const levelClass = m.level === '强烈推荐' ? 'green' : m.level === '推荐' ? 'blue' : m.level === '可考虑' ? 'amber' : 'red';
+    return `
+      <tr>
+        <td style="font-weight: 700;">${m.site}</td>
+        <td class="mono">${m.volume}</td>
+        <td class="mono">${m.competitors}</td>
+        <td class="mono">${m.price}</td>
+        <td class="mono">★ ${m.rating}</td>
+        <td class="mono">${m.ratio}</td>
+        <td class="mono">${m.sales}</td>
+        <td><div class="score-ring ${m.score >= 85 ? 'high' : m.score >= 70 ? 'mid' : 'low'}" style="--p: ${m.score}%"><span>${m.score}</span></div></td>
+        <td><span class="tag ${levelClass}">${m.level}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ===== 产品详情弹窗 =====
+function openProductModal(id) {
+  const p = currentData.products.find(x => x.id === id);
+  document.getElementById('modalProductName').textContent = p.name;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+      <div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text-500); margin-bottom: 8px;">核心指标</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: var(--bg-50); padding: 12px; border-radius: 6px;">
+            <div style="font-size: 11px; color: var(--text-500);">机会分数</div>
+            <div style="font-size: 24px; font-weight: 900; color: var(--green-500); font-family: 'JetBrains Mono', monospace;">${p.score}</div>
+          </div>
+          <div style="background: var(--bg-50); padding: 12px; border-radius: 6px;">
+            <div style="font-size: 11px; color: var(--text-500);">搜索增长</div>
+            <div style="font-size: 24px; font-weight: 900; color: var(--green-500); font-family: 'JetBrains Mono', monospace;">+${p.growth}%</div>
+          </div>
+          <div style="background: var(--bg-50); padding: 12px; border-radius: 6px;">
+            <div style="font-size: 11px; color: var(--text-500);">预估客单价</div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--navy-900); font-family: 'JetBrains Mono', monospace;">${p.price}</div>
+          </div>
+          <div style="background: var(--bg-50); padding: 12px; border-radius: 6px;">
+            <div style="font-size: 11px; color: var(--text-500);">利润空间</div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--green-500);">${p.profit}</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text-500); margin-bottom: 8px;">用户核心痛点</div>
+        <div style="background: var(--red-100); border-radius: 8px; padding: 16px;">
+          ${p.painDetails.map(pain => `<div style="padding: 6px 0; color: #991B1B; font-size: 13px; display: flex; gap: 8px;"><span style="font-weight: 700;">•</span>${pain}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="background: var(--green-100); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <div style="font-size: 13px; font-weight: 700; color: #065F46; margin-bottom: 8px;">差异化改进方向</div>
+      <div style="font-size: 13px; color: #065F46; line-height: 1.7;">${p.improve}</div>
+    </div>
+    <div>
+      <div style="font-size: 13px; font-weight: 600; color: var(--text-500); margin-bottom: 12px;">搜索热度预测趋势</div>
+      <div id="modalTrendChart" style="width: 100%; height: 240px;"></div>
+    </div>
+  `;
+  document.getElementById('productModal').classList.add('show');
+  setTimeout(() => {
+    const chart = echarts.init(document.getElementById('modalTrendChart'));
+    chart.setOption({
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: ['8月', '9月上', '9月下', '10月上', '10月中', '10月下', '11月'], axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+      series: [{
+        type: 'line',
+        data: [120, 340, 680, 1200, 2400, 3800, 900],
+        smooth: true,
+        lineStyle: { color: '#F59E0B', width: 3 },
+        areaStyle: { color: 'rgba(245, 158, 11, 0.15)' },
+        itemStyle: { color: '#F59E0B' }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('modalTrendChart'));
+  }, 100);
+}
+function closeModal() {
+  document.getElementById('productModal').classList.remove('show');
+}
+
+// ===== 利润测算 =====
+function calculateProfit() {
+  const cost = parseFloat(document.getElementById('costInput').value);
+  const price = parseFloat(document.getElementById('priceInput').value);
+  const logistics = parseFloat(document.getElementById('logisticsInput').value);
+  const commission = parseFloat(document.getElementById('commissionInput').value) / 100;
+  const cpc = parseFloat(document.getElementById('cpcInput').value);
+  const conversion = parseFloat(document.getElementById('conversionInput').value) / 100;
+  const exchangeRate = 7.2;
+  
+  const revenueRMB = price * exchangeRate;
+  const commissionFee = revenueRMB * commission;
+  const adCostPerSale = cpc / conversion * exchangeRate;
+  const totalCost = cost + logistics + commissionFee + adCostPerSale;
+  const netProfitRMB = revenueRMB - totalCost;
+  const netProfitUSD = netProfitRMB / exchangeRate;
+  const roi = (netProfitRMB / totalCost * 100).toFixed(0);
+  const breakEven = Math.ceil(5000 / (netProfitRMB / totalCost * 100 / 100 * 100));
+  
+  document.getElementById('netProfit').textContent = '$' + netProfitUSD.toFixed(2);
+  document.getElementById('roiValue').textContent = roi + '%';
+  document.getElementById('breakEven').textContent = Math.ceil(3000 / netProfitRMB * totalCost) + '件';
+  
+  // 成本结构图
+  const chart = echarts.init(document.getElementById('costBreakdownChart'));
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    series: [{
+      type: 'pie',
+      radius: ['50%', '75%'],
+      center: ['50%', '50%'],
+      label: { color: '#fff', fontSize: 11, formatter: '{b}\n{d}%' },
+      data: [
+        { value: cost, name: '采购成本', itemStyle: { color: '#F59E0B' } },
+        { value: logistics, name: '头程物流', itemStyle: { color: '#3B82F6' } },
+        { value: commissionFee, name: '平台佣金', itemStyle: { color: '#10B981' } },
+        { value: adCostPerSale, name: '广告成本', itemStyle: { color: '#EF4444' } },
+        { value: netProfitRMB, name: '净利润', itemStyle: { color: '#8B5CF6' } }
+      ]
+    }]
+  });
+  new ResizeObserver(() => chart.resize()).observe(document.getElementById('costBreakdownChart'));
+}
+
+// ===== 导航切换 =====
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const view = item.dataset.view;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    const titles = {
+      prediction: ['爆品预测中心', '/ 万圣节2026 · 美国站 · Amazon'],
+      pain: ['痛点反向拆解', '/ 万圣节装饰品类 · 差评深度挖掘'],
+      trend: ['趋势追踪看板', '/ 关键词热度 · 供需比监测'],
+      competitor: ['竞品深度分析', '/ Top5竞品对标 · 爆款基因拆解'],
+      profit: ['利润测算工具', '/ 成本ROI计算 · 保本销量分析'],
+      combo: ['选品组合推荐', '/ 节日款+通用款 · 运营时间线'],
+      keyword: ['关键词研究中心', '/ 长尾词挖掘 · 竞品流量反查'],
+      supply: ['供应链货源匹配', '/ 1688工厂直供 · 采购成本分析'],
+      inventory: ['库存备货预测', '/ 销量预测 · 补货时间预警'],
+      listing: ['Listing优化助手', '/ AI文案生成 · 关键词埋词检测'],
+      compliance: ['合规风险检测', '/ 认证要求 · 专利侵权预警'],
+      multisite: ['跨站点机会对比', '/ 全球市场 · 最佳进入站点推荐']
+    };
+    document.getElementById('pageTitle').textContent = titles[view][0];
+    document.getElementById('pageBreadcrumb').textContent = titles[view][1];
+    setTimeout(initCharts, 100);
+  });
+});
+
+// ===== 图表初始化 =====
+let chartsInitialized = {};
+let chartInstances = {};
+function initCharts() {
+  // 趋势图
+  if (document.getElementById('trendChart')) {
+    if (chartInstances.trend) chartInstances.trend.dispose();
+    const chart = echarts.init(document.getElementById('trendChart'));
+    const td = currentData.trendData;
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['搜索指数', '预估销量'], top: 0, textStyle: { fontSize: 12 } },
+      grid: { left: 50, right: 20, top: 40, bottom: 30 },
+      xAxis: { type: 'category', data: td.months, axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', name: '指数', axisLabel: { fontSize: 11 } },
+      series: [
+        { name: '搜索指数', type: 'line', smooth: true, data: td.search, lineStyle: { color: '#F59E0B', width: 2 }, itemStyle: { color: '#F59E0B' }, areaStyle: { color: 'rgba(245,158,11,0.1)' } },
+        { name: '预估销量', type: 'line', smooth: true, data: td.sales, lineStyle: { color: '#3B82F6', width: 2 }, itemStyle: { color: '#3B82F6' } }
+      ]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('trendChart'));
+    chartInstances.trend = chart;
+    chartsInitialized.trend = true;
+  }
+  
+  // 品类分布饼图
+  if (document.getElementById('categoryChart')) {
+    if (chartInstances.category) chartInstances.category.dispose();
+    const chart = echarts.init(document.getElementById('categoryChart'));
+    const colors = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#A3A3A3', '#8B5CF6'];
+    chart.setOption({
+      tooltip: { trigger: 'item' },
+      series: [{
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '50%'],
+        label: { fontSize: 12, formatter: '{b}\n{d}%' },
+        data: currentData.categoryData.map((c, i) => ({ ...c, itemStyle: { color: colors[i % colors.length] } }))
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('categoryChart'));
+    chartInstances.category = chart;
+    chartsInitialized.category = true;
+  }
+  
+  // 关键词趋势
+  if (!chartsInitialized.keyword && document.getElementById('keywordTrendChart')) {
+    const chart = echarts.init(document.getElementById('keywordTrendChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['halloween decor', 'halloween costume', 'pet costume'], top: 0, textStyle: { fontSize: 12 } },
+      grid: { left: 50, right: 20, top: 40, bottom: 30 },
+      xAxis: { type: 'category', data: Array.from({length: 12}, (_, i) => `第${i+1}周`), axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+      series: [
+        { name: 'halloween decor', type: 'line', smooth: true, data: [120,140,180,220,280,350,420,580,780,1100,1500,900], lineStyle: { color: '#F59E0B' }, itemStyle: { color: '#F59E0B' } },
+        { name: 'halloween costume', type: 'line', smooth: true, data: [100,120,150,190,240,300,380,500,680,950,1300,780], lineStyle: { color: '#3B82F6' }, itemStyle: { color: '#3B82F6' } },
+        { name: 'pet costume', type: 'line', smooth: true, data: [40,55,70,90,120,160,210,290,400,580,820,520], lineStyle: { color: '#EF4444' }, itemStyle: { color: '#EF4444' } }
+      ]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('keywordTrendChart'));
+    chartsInitialized.keyword = true;
+  }
+  
+  // 供需比
+  if (!chartsInitialized.supplyDemand && document.getElementById('supplyDemandChart')) {
+    const chart = echarts.init(document.getElementById('supplyDemandChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 50, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: ['6月','7月','8月','9月','10月','11月'], axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+      series: [{
+        type: 'bar',
+        data: [2.8, 2.3, 1.8, 1.2, 0.7, 1.5],
+        itemStyle: { color: params => params.value > 1.5 ? '#10B981' : params.value > 1 ? '#F59E0B' : '#EF4444' }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('supplyDemandChart'));
+    chartsInitialized.supplyDemand = true;
+  }
+  
+  // 平台销量
+  if (!chartsInitialized.platformSales && document.getElementById('platformSalesChart')) {
+    const chart = echarts.init(document.getElementById('platformSalesChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 60, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'category', data: ['TikTok Shop', 'Amazon', 'TEMU', 'SHEIN', 'eBay'], axisLabel: { fontSize: 11 } },
+      series: [{
+        type: 'bar',
+        data: [4200, 3800, 2900, 2100, 1200],
+        itemStyle: { color: '#F59E0B', borderRadius: [0, 4, 4, 0] }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('platformSalesChart'));
+    chartsInitialized.platformSales = true;
+  }
+  
+  // 价格带
+  if (!chartsInitialized.priceRange && document.getElementById('priceRangeChart')) {
+    const chart = echarts.init(document.getElementById('priceRangeChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 50, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: ['<$10','$10-20','$20-30','$30-50','>$50'], axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+      series: [{
+        type: 'bar',
+        data: [18, 42, 28, 9, 3],
+        itemStyle: { color: '#3B82F6', borderRadius: [4, 4, 0, 0] }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('priceRangeChart'));
+    chartsInitialized.priceRange = true;
+  }
+  
+  // 竞品雷达图
+  if (!chartsInitialized.competitorRadar && document.getElementById('competitorRadarChart')) {
+    const chart = echarts.init(document.getElementById('competitorRadarChart'));
+    chart.setOption({
+      tooltip: {},
+      legend: { data: ['竞品A', '竞品B', '竞品C', '竞品D', '竞品E', '行业均值'], top: 0, textStyle: { fontSize: 12 } },
+      radar: {
+        indicator: [
+          { name: '产品质量', max: 100 },
+          { name: '功能体验', max: 100 },
+          { name: '尺码准确', max: 100 },
+          { name: '包装物流', max: 100 },
+          { name: '性价比', max: 100 },
+          { name: '用户评分', max: 100 }
+        ],
+        radius: '65%',
+        axisName: { fontSize: 12, color: '#404040' }
+      },
+      series: [{
+        type: 'radar',
+        data: [
+          { value: [65, 58, 52, 70, 82, 3.8], name: '竞品A', lineStyle: { color: '#EF4444' }, itemStyle: { color: '#EF4444' }, areaStyle: { opacity: 0.1 } },
+          { value: [72, 68, 60, 65, 75, 4.1], name: '竞品B', lineStyle: { color: '#F59E0B' }, itemStyle: { color: '#F59E0B' }, areaStyle: { opacity: 0.1 } },
+          { value: [60, 55, 70, 75, 85, 3.9], name: '竞品C', lineStyle: { color: '#3B82F6' }, itemStyle: { color: '#3B82F6' }, areaStyle: { opacity: 0.1 } },
+          { value: [58, 62, 55, 68, 88, 3.7], name: '竞品D', lineStyle: { color: '#10B981' }, itemStyle: { color: '#10B981' }, areaStyle: { opacity: 0.1 } },
+          { value: [70, 75, 65, 72, 70, 4.2], name: '竞品E', lineStyle: { color: '#8B5CF6' }, itemStyle: { color: '#8B5CF6' }, areaStyle: { opacity: 0.1 } },
+          { value: [65, 64, 60, 70, 80, 3.94], name: '行业均值', lineStyle: { color: '#A3A3A3', type: 'dashed' }, itemStyle: { color: '#A3A3A3' } }
+        ]
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('competitorRadarChart'));
+    chartsInitialized.competitorRadar = true;
+  }
+  
+  // 竞品趋势
+  if (!chartsInitialized.competitorTrend && document.getElementById('competitorTrendChart')) {
+    const chart = echarts.init(document.getElementById('competitorTrendChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['竞品A价格', '竞品B价格', '竞品A BSR排名', '竞品B BSR排名'], top: 0, textStyle: { fontSize: 12 } },
+      grid: { left: 50, right: 50, top: 40, bottom: 30 },
+      xAxis: { type: 'category', data: ['8/1','8/8','8/15','8/22','8/29','9/5'], axisLabel: { fontSize: 11 } },
+      yAxis: [
+        { type: 'value', name: '价格($)', axisLabel: { fontSize: 11 } },
+        { type: 'value', name: 'BSR排名', inverse: true, axisLabel: { fontSize: 11 } }
+      ],
+      series: [
+        { name: '竞品A价格', type: 'line', data: [24.99, 24.99, 22.99, 22.99, 19.99, 19.99], lineStyle: { color: '#EF4444' }, itemStyle: { color: '#EF4444' } },
+        { name: '竞品B价格', type: 'line', data: [27.99, 27.99, 27.99, 25.99, 25.99, 23.99], lineStyle: { color: '#3B82F6' }, itemStyle: { color: '#3B82F6' } },
+        { name: '竞品A BSR排名', type: 'line', yAxisIndex: 1, data: [1200, 980, 850, 720, 580, 420], lineStyle: { color: '#F59E0B', type: 'dashed' }, itemStyle: { color: '#F59E0B' } },
+        { name: '竞品B BSR排名', type: 'line', yAxisIndex: 1, data: [850, 760, 690, 620, 550, 480], lineStyle: { color: '#10B981', type: 'dashed' }, itemStyle: { color: '#10B981' } }
+      ]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('competitorTrendChart'));
+    chartsInitialized.competitorTrend = true;
+  }
+  
+  // 关键词分布图
+  if (!chartsInitialized.keywordDist && document.getElementById('keywordDistChart')) {
+    const chart = echarts.init(document.getElementById('keywordDistChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 50, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: ['<1k', '1-5k', '5-10k', '10-50k', '>50k'], axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', name: '关键词数', axisLabel: { fontSize: 11 } },
+      series: [{
+        type: 'bar',
+        data: [856, 1243, 487, 234, 27],
+        itemStyle: { color: '#F59E0B', borderRadius: [4, 4, 0, 0] }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('keywordDistChart'));
+    chartsInitialized.keywordDist = true;
+  }
+  
+  // 流量来源图
+  if (!chartsInitialized.trafficSource && document.getElementById('trafficSourceChart')) {
+    const chart = echarts.init(document.getElementById('trafficSourceChart'));
+    chart.setOption({
+      tooltip: { trigger: 'item' },
+      series: [{
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '50%'],
+        label: { fontSize: 11, formatter: '{b}\n{d}%' },
+        data: [
+          { value: 45, name: '自然搜索', itemStyle: { color: '#F59E0B' } },
+          { value: 28, name: '广告流量', itemStyle: { color: '#EF4444' } },
+          { value: 15, name: '关联推荐', itemStyle: { color: '#3B82F6' } },
+          { value: 8, name: '榜单流量', itemStyle: { color: '#10B981' } },
+          { value: 4, name: '其他', itemStyle: { color: '#A3A3A3' } }
+        ]
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('trafficSourceChart'));
+    chartsInitialized.trafficSource = true;
+  }
+  
+  // 成本结构图
+  if (!chartsInitialized.costStructure && document.getElementById('costStructureChart')) {
+    const chart = echarts.init(document.getElementById('costStructureChart'));
+    chart.setOption({
+      tooltip: { trigger: 'item' },
+      series: [{
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '50%'],
+        label: { fontSize: 11, formatter: '{b}\n{d}%' },
+        data: [
+          { value: 58, name: '原材料', itemStyle: { color: '#F59E0B' } },
+          { value: 18, name: '人工组装', itemStyle: { color: '#3B82F6' } },
+          { value: 12, name: '包装耗材', itemStyle: { color: '#10B981' } },
+          { value: 7, name: '模具摊销', itemStyle: { color: '#EF4444' } },
+          { value: 5, name: '工厂利润', itemStyle: { color: '#8B5CF6' } }
+        ]
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('costStructureChart'));
+    chartsInitialized.costStructure = true;
+  }
+  
+  // 阶梯报价图
+  if (!chartsInitialized.tierPrice && document.getElementById('tierPriceChart')) {
+    const chart = echarts.init(document.getElementById('tierPriceChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 50, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: ['100件', '500件', '1000件', '3000件', '5000件'], axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'value', name: '单价(元)', axisLabel: { fontSize: 11 } },
+      series: [{
+        type: 'line',
+        data: [18.5, 16.8, 15.2, 13.6, 12.8],
+        smooth: true,
+        lineStyle: { color: '#10B981', width: 3 },
+        itemStyle: { color: '#10B981' },
+        areaStyle: { color: 'rgba(16, 185, 129, 0.15)' }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('tierPriceChart'));
+    chartsInitialized.tierPrice = true;
+  }
+  
+  // 库存预测图
+  if (!chartsInitialized.inventoryForecast && document.getElementById('inventoryForecastChart')) {
+    const chart = echarts.init(document.getElementById('inventoryForecastChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['预测销量', '库存余量'], top: 0, textStyle: { fontSize: 12 } },
+      grid: { left: 50, right: 50, top: 40, bottom: 30 },
+      xAxis: { type: 'category', data: ['9月','10月上','10月中','10月下','万圣周','11月初','11月中'], axisLabel: { fontSize: 11 } },
+      yAxis: [
+        { type: 'value', name: '销量(件)', axisLabel: { fontSize: 11 } },
+        { type: 'value', name: '库存(件)', axisLabel: { fontSize: 11 } }
+      ],
+      series: [
+        { name: '预测销量', type: 'bar', data: [280, 520, 780, 950, 1200, 320, 150], itemStyle: { color: '#F59E0B' } },
+        { name: '库存余量', type: 'line', yAxisIndex: 1, data: [3200, 2680, 1900, 950, 0, 0, 0], lineStyle: { color: '#EF4444', width: 2 }, itemStyle: { color: '#EF4444' } }
+      ]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('inventoryForecastChart'));
+    chartsInitialized.inventoryForecast = true;
+  }
+  
+  // 关键词覆盖图
+  if (!chartsInitialized.keywordCoverage && document.getElementById('keywordCoverageChart')) {
+    const chart = echarts.init(document.getElementById('keywordCoverageChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['搜索量', '是否已埋词'], top: 0, textStyle: { fontSize: 12 } },
+      grid: { left: 180, right: 40, top: 40, bottom: 30 },
+      xAxis: { type: 'value', axisLabel: { fontSize: 11 } },
+      yAxis: { type: 'category', data: currentData.keywords.map(k => k.word).reverse(), axisLabel: { fontSize: 10 } },
+      series: [
+        { name: '搜索量', type: 'bar', data: currentData.keywords.map(k => k.volume).reverse(), itemStyle: { color: '#3B82F6' } },
+        { name: '是否已埋词', type: 'scatter', data: currentData.keywords.map((k, i) => [k.volume * 1.1, currentData.keywords.length - 1 - i, k.recommend === '必埋词' || k.recommend === '核心词' ? '已覆盖' : '待补充']).reverse(), symbolSize: 12, itemStyle: { color: params => params.value[2] === '已覆盖' ? '#10B981' : '#EF4444' } }
+      ]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('keywordCoverageChart'));
+    chartsInitialized.keywordCoverage = true;
+  }
+  
+  // 跨站点雷达图
+  if (!chartsInitialized.multisiteRadar && document.getElementById('multisiteRadarChart')) {
+    const chart = echarts.init(document.getElementById('multisiteRadarChart'));
+    chart.setOption({
+      tooltip: {},
+      legend: { data: ['美国站', '加拿大站', '英国站', '德国站'], top: 0, textStyle: { fontSize: 12 } },
+      radar: {
+        indicator: [
+          { name: '市场容量', max: 100 },
+          { name: '竞争度(低为优)', max: 100 },
+          { name: '利润空间', max: 100 },
+          { name: '合规难度(低为优)', max: 100 },
+          { name: '物流成本(低为优)', max: 100 },
+          { name: '增长潜力', max: 100 }
+        ],
+        radius: '65%',
+        axisName: { fontSize: 12, color: '#404040' }
+      },
+      series: [{
+        type: 'radar',
+        data: [
+          { value: [95, 60, 75, 70, 80, 85], name: '美国站', lineStyle: { color: '#F59E0B' }, itemStyle: { color: '#F59E0B' }, areaStyle: { opacity: 0.15 } },
+          { value: [65, 90, 85, 75, 70, 78], name: '加拿大站', lineStyle: { color: '#10B981' }, itemStyle: { color: '#10B981' }, areaStyle: { opacity: 0.15 } },
+          { value: [72, 75, 70, 65, 75, 70], name: '英国站', lineStyle: { color: '#3B82F6' }, itemStyle: { color: '#3B82F6' }, areaStyle: { opacity: 0.15 } },
+          { value: [68, 55, 65, 45, 60, 62], name: '德国站', lineStyle: { color: '#EF4444' }, itemStyle: { color: '#EF4444' }, areaStyle: { opacity: 0.15 } }
+        ]
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(document.getElementById('multisiteRadarChart'));
+    chartsInitialized.multisiteRadar = true;
+  }
+}
+
+// ===== 通用交互函数 =====
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast ' + type;
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// 生成选品报告
+function generateReport() {
+  const region = document.getElementById('regionSelect').value;
+  const platform = document.getElementById('platformSelect').value;
+  const event = document.getElementById('eventSelect').value;
+  const kpi = currentData.kpi;
+  const topProducts = currentData.products.slice(0, 4);
+  const topImprovements = currentData.improvements.slice(0, 4);
+  
+  const reportHtml = `
+    <div class="report-content">
+      <h3>选品分析报告</h3>
+      <p><strong>分析维度：</strong>${event} · ${region}站 · ${platform}平台</p>
+      <p><strong>生成时间：</strong>${new Date().toLocaleString('zh-CN')}</p>
+      
+      <div class="report-highlight">
+        <strong>核心结论：</strong>本次共筛选出${kpi.products}个潜力爆品，其中高机会分（>85）产品${kpi.highGrowth}个，平均机会分数${kpi.avgScore}，蓝海赛道${kpi.blueOcean}个，建议重点关注Top3产品赛道。
+      </div>
+      
+      <h4>一、品类机会排名（Top4）</h4>
+      <ul>
+        ${topProducts.map((p, i) => `<li><strong>${p.name}（机会分${p.score}）：</strong>搜索增速+${p.growth}%，竞品${p.competitors}个，利润率${p.profit}，核心痛点：${p.pain}</li>`).join('')}
+      </ul>
+      
+      <h4>二、核心痛点与改进方向</h4>
+      <ul>
+        ${topImprovements.map(imp => `<li>${imp.title} → ${imp.desc}，${imp.willingness}</li>`).join('')}
+      </ul>
+      
+      <h4>三、六大维度痛点分布</h4>
+      <ul>
+        ${currentData.painDimensions.slice(0, 4).map(d => `<li><strong>${d.name}（${d.percent}%）：</strong>${d.top}</li>`).join('')}
+      </ul>
+      
+      <h4>四、备货与风险提示</h4>
+      <ul>
+        <li>建议备货：${currentData.inventoryPlans[1].quantity}，预计售罄率${currentData.inventoryPlans[1].sellThrough}</li>
+        <li>合规风险：${currentData.certifications.filter(c => c.status === '待办理').map(c => c.name).join('、') || '无待办认证'}</li>
+        <li>专利风险：${currentData.patents.filter(p => p.risk !== '无风险').map(p => p.type).join('、') || '无专利风险'}</li>
+      </ul>
+    </div>
+  `;
+  
+  document.getElementById('modalProductName').textContent = '选品分析报告';
+  document.getElementById('modalBody').innerHTML = reportHtml;
+  document.getElementById('productModal').classList.add('show');
+  showToast('报告生成成功', 'success');
+}
+
+// 导出功能
+function exportData(type) {
+  showToast(`${type}已开始导出，文件将自动下载`, 'success');
+}
+
+// Listing生成
+function generateListing() {
+  showToast('AI Listing 已生成，关键词覆盖率92%', 'success');
+}
+
+// 筛选器事件
+function initFilters() {
+  document.getElementById('regionSelect').addEventListener('change', function() {
+    showToast(`已切换至${this.value}站，点击重新生成按钮更新数据`, 'info');
+  });
+  document.getElementById('platformSelect').addEventListener('change', function() {
+    showToast(`已切换至${this.value}平台，点击重新生成按钮更新数据`, 'info');
+  });
+  document.getElementById('eventSelect').addEventListener('change', function() {
+    showToast(`已切换至${this.value}场景，点击重新生成按钮更新数据`, 'info');
+  });
+  document.getElementById('painCategorySelect').addEventListener('change', function() {
+    showToast(`已切换至${this.value}痛点分析`, 'success');
+  });
+}
+
+// 全局按钮事件委托
+function initButtonEvents() {
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    
+    const text = btn.textContent.trim();
+    
+    if (text.includes('生成选品报告') || text.includes('生成报告')) {
+      generateReport();
+    } else if (text.includes('导出')) {
+      exportData(text.replace('导出', ''));
+    } else if (text.includes('一键生成')) {
+      showToast('已生成，可在下方查看结果', 'success');
+    } else if (text.includes('一键比价')) {
+      showToast('比价完成，最低采购价¥12.8/件', 'success');
+    } else if (text.includes('联系')) {
+      showToast('已发送询盘，供应商将在24小时内回复', 'success');
+    } else if (text.includes('详情')) {
+      // 详情由tr的onclick处理
+    } else {
+      showToast('功能已触发：' + text, 'success');
+    }
+  });
+}
+
+// ===== 重新生成数据 =====
+function regenerateData() {
+  const region = document.getElementById('regionSelect').value;
+  const platform = document.getElementById('platformSelect').value;
+  const event = document.getElementById('eventSelect').value;
+  
+  // 显示加载状态
+  const btn = document.getElementById('regenerateBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span style="font-size: 14px;">⏳</span> 分析中...';
+  btn.disabled = true;
+  
+  setTimeout(() => {
+    // 生成新数据集
+    currentData = generateDataset(event, platform, region);
+    
+    // 更新KPI卡片
+    const kpi = currentData.kpi;
+    const kpiCards = document.querySelectorAll('#view-prediction .kpi-value');
+    if (kpiCards.length >= 4) {
+      kpiCards[0].innerHTML = `${kpi.products}<span class="kpi-unit">个</span>`;
+      kpiCards[1].innerHTML = `${kpi.avgScore}<span class="kpi-unit">/100</span>`;
+      kpiCards[2].innerHTML = `${kpi.highGrowth}<span class="kpi-unit">个</span>`;
+      kpiCards[3].innerHTML = `${kpi.blueOcean}<span class="kpi-unit">个</span>`;
+    }
+    
+    // 更新痛点KPI
+    const painKpiCards = document.querySelectorAll('#view-pain .kpi-value');
+    if (painKpiCards.length >= 4) {
+      painKpiCards[0].innerHTML = `${kpi.painTotal.toLocaleString()}<span class="kpi-unit">条</span>`;
+      painKpiCards[1].innerHTML = `${kpi.commonPain}<span class="kpi-unit">个</span>`;
+      painKpiCards[2].innerHTML = `${kpi.improve}<span class="kpi-unit">个</span>`;
+      painKpiCards[3].innerHTML = `${kpi.accuracy}<span class="kpi-unit">%</span>`;
+    }
+    
+    // 重新渲染所有数据
+    renderProductTable();
+    renderPainDimensions();
+    renderReviews();
+    renderImprovements();
+    renderCombos();
+    renderKeywordTable();
+    renderSupplierTable();
+    renderInventoryPlans();
+    renderCertList();
+    renderPatentList();
+    renderMultisiteTable();
+    
+    // 重新渲染图表
+    chartsInitialized = {};
+    initCharts();
+    calculateProfit();
+    
+    // 恢复按钮
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    
+    showToast(`已根据 ${event} · ${region}站 · ${platform}平台 重新生成分析数据`, 'success');
+  }, 800);
+}
+
+// ===== 初始化 =====
+currentData = generateDataset('万圣节 2026', 'Amazon', '美国');
+renderProductTable();
+renderPainDimensions();
+renderReviews();
+renderImprovements();
+renderCombos();
+renderKeywordTable();
+renderSupplierTable();
+renderInventoryPlans();
+renderCertList();
+renderPatentList();
+renderMultisiteTable();
+initFilters();
+initButtonEvents();
+initCharts();
+calculateProfit();
+
+// 点击遮罩关闭弹窗
+document.getElementById('productModal').addEventListener('click', (e) => {
+  if (e.target.id === 'productModal') closeModal();
+});
+</script>
+</body>
+</html>
