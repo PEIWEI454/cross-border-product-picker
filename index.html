@@ -735,6 +735,19 @@ body {
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         跨站点机会对比
       </div>
+      <div class="nav-group-title">深度分析工具</div>
+      <div class="nav-item" data-view="market">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="12" y="6" width="3" height="12"/><rect x="17" y="13" width="3" height="5"/></svg>
+        品类市场趋势
+      </div>
+      <div class="nav-item" data-view="compsearch">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8 11h6M11 8v6"/></svg>
+        竞品深度查询
+      </div>
+      <div class="nav-item" data-view="roicalc">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M17 12h1M6 12h1M12 6v1M12 17v1"/></svg>
+        回款盈亏计算
+      </div>
     </nav>
     <div class="sidebar-footer">
       <div class="data-update-time">
@@ -1475,6 +1488,228 @@ body {
               <tbody id="multisiteTableBody"></tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图13：品类市场趋势分析 ===== -->
+      <section class="view" id="view-market">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">品类市场趋势分析 <span class="card-title-badge">关键词搜索 · 历史销量数据</span></div>
+          </div>
+          <div class="card-body">
+            <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">搜索关键词</label>
+                <input type="text" class="filter-select" id="marketKeyword" style="width: 100%;" value="led pumpkin lights" placeholder="输入产品关键词，如：led pumpkin lights">
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">数据周期</label>
+                <select class="filter-select" id="marketPeriod">
+                  <option>近1年</option><option>近2年</option><option>近3年</option>
+                </select>
+              </div>
+              <button class="btn primary" onclick="analyzeMarket()">🔍 搜索分析</button>
+            </div>
+            <div id="marketResult" style="display: none;">
+              <div class="kpi-grid" style="margin-bottom: 20px;">
+                <div class="kpi-card">
+                  <div class="kpi-label">品类年销量</div>
+                  <div class="kpi-value" id="marketYearSales">-</div>
+                  <div class="kpi-trend up" id="marketYoY">-</div>
+                </div>
+                <div class="kpi-card green">
+                  <div class="kpi-label">销售旺季</div>
+                  <div class="kpi-value" id="marketPeakMonth">-</div>
+                  <div class="kpi-trend">销量最高月份</div>
+                </div>
+                <div class="kpi-card red">
+                  <div class="kpi-label">销售淡季</div>
+                  <div class="kpi-value" id="marketLowMonth">-</div>
+                  <div class="kpi-trend">销量最低月份</div>
+                </div>
+                <div class="kpi-card blue">
+                  <div class="kpi-label">市场竞争度</div>
+                  <div class="kpi-value" id="marketCompetition">-</div>
+                  <div class="kpi-trend">同类商品数量</div>
+                </div>
+              </div>
+              <div class="card" style="margin-bottom: 16px; box-shadow: none; border: 1px solid var(--border);">
+                <div class="card-header"><div class="card-title">月度销量趋势图 <span class="card-title-badge">近12个月</span></div></div>
+                <div class="card-body"><div id="marketTrendChart" class="chart-container" style="min-height: 320px;"></div></div>
+              </div>
+              <div class="two-col">
+                <div class="card" style="box-shadow: none; border: 1px solid var(--border);">
+                  <div class="card-header"><div class="card-title">各平台销量占比</div></div>
+                  <div class="card-body"><div id="marketPlatformChart" class="chart-container small"></div></div>
+                </div>
+                <div class="card" style="box-shadow: none; border: 1px solid var(--border);">
+                  <div class="card-header"><div class="card-title">价格带分布</div></div>
+                  <div class="card-body"><div id="marketPriceChart" class="chart-container small"></div></div>
+                </div>
+              </div>
+              <div class="card" style="margin-top: 16px; box-shadow: none; border: 1px solid var(--border);">
+                <div class="card-header"><div class="card-title">市场进入建议</div></div>
+                <div class="card-body" id="marketAdvice" style="font-size: 13px; line-height: 1.8; color: var(--text-700);"></div>
+              </div>
+            </div>
+            <div id="marketEmpty" style="text-align: center; padding: 60px 20px; color: var(--text-500);">
+              <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">输入关键词开始市场分析</div>
+              <div style="font-size: 13px;">搜索后将展示该品类在各平台的历史销量数据、淡旺季分布、价格带分析</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图14：竞品深度查询 ===== -->
+      <section class="view" id="view-compsearch">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">竞品深度查询 <span class="card-title-badge">产品ID查询 · 竞品对比</span></div>
+          </div>
+          <div class="card-body">
+            <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">产品ASIN/ID</label>
+                <input type="text" class="filter-select" id="compProductId" style="width: 100%;" value="B0CDXYZ123" placeholder="输入产品ASIN或ID，如：B0CDXYZ123">
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">平台</label>
+                <select class="filter-select" id="compPlatform">
+                  <option>Amazon</option><option>TikTok Shop</option><option>TEMU</option><option>SHEIN</option>
+                </select>
+              </div>
+              <button class="btn primary" onclick="searchCompetitors()">🔍 查询竞品</button>
+            </div>
+            <div id="compResult" style="display: none;">
+              <div class="card" style="margin-bottom: 16px; box-shadow: none; border: 1px solid var(--border);">
+                <div class="card-header"><div class="card-title">目标产品信息</div></div>
+                <div class="card-body" id="compTargetInfo"></div>
+              </div>
+              <div class="kpi-grid" style="margin-bottom: 20px;">
+                <div class="kpi-card">
+                  <div class="kpi-label">竞品数量</div>
+                  <div class="kpi-value" id="compCount">-</div>
+                  <div class="kpi-trend">同类直接竞品</div>
+                </div>
+                <div class="kpi-card green">
+                  <div class="kpi-label">竞品均价</div>
+                  <div class="kpi-value" id="compAvgPrice">-</div>
+                  <div class="kpi-trend">市场价格中枢</div>
+                </div>
+                <div class="kpi-card blue">
+                  <div class="kpi-label">竞品平均月销</div>
+                  <div class="kpi-value" id="compAvgSales">-</div>
+                  <div class="kpi-trend">头部竞品均值</div>
+                </div>
+                <div class="kpi-card red">
+                  <div class="kpi-label">价格优势空间</div>
+                  <div class="kpi-value" id="compPriceGap">-</div>
+                  <div class="kpi-trend">与最低价差值</div>
+                </div>
+              </div>
+              <div class="card" style="box-shadow: none; border: 1px solid var(--border);">
+                <div class="card-header">
+                  <div class="card-title">竞品列表 <span class="card-title-badge">按销量排序</span></div>
+                  <div class="card-actions"><button class="btn">导出竞品表</button></div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                  <table class="product-table">
+                    <thead>
+                      <tr>
+                        <th>排名</th><th>产品名称</th><th>价格</th><th>月销量</th>
+                        <th>评分</th><th>评论数</th><th>BSR排名</th><th>上架时间</th><th>链接</th>
+                      </tr>
+                    </thead>
+                    <tbody id="compTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card" style="margin-top: 16px; box-shadow: none; border: 1px solid var(--border);">
+                <div class="card-header"><div class="card-title">竞品价格销量对比图</div></div>
+                <div class="card-body"><div id="compCompareChart" class="chart-container" style="min-height: 320px;"></div></div>
+              </div>
+            </div>
+            <div id="compEmpty" style="text-align: center; padding: 60px 20px; color: var(--text-500);">
+              <div style="font-size: 48px; margin-bottom: 16px;">🔎</div>
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">输入产品ID开始竞品查询</div>
+              <div style="font-size: 13px;">查询后将展示该产品的同类竞品价格、销量、评分、链接等详细数据</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 视图15：回款周期与盈亏计算器 ===== -->
+      <section class="view" id="view-roicalc">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">成本利润输入 <span class="card-title-badge">逐项填写</span></div>
+            </div>
+            <div class="card-body">
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">产品售价（$）</label>
+                <input type="number" class="filter-select" id="roiPrice" style="width: 100%;" value="24.99" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">采购成本（¥）</label>
+                <input type="number" class="filter-select" id="roiCost" style="width: 100%;" value="15.2" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">头程物流费（¥/件）</label>
+                <input type="number" class="filter-select" id="roiShipping" style="width: 100%;" value="8.5" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">平台佣金率（%）</label>
+                <input type="number" class="filter-select" id="roiCommission" style="width: 100%;" value="15" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">FBA配送费（$）</label>
+                <input type="number" class="filter-select" id="roiFba" style="width: 100%;" value="4.5" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">广告占比（%）</label>
+                <input type="number" class="filter-select" id="roiAd" style="width: 100%;" value="20" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">退货率（%）</label>
+                <input type="number" class="filter-select" id="roiReturn" style="width: 100%;" value="5" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">汇率（USD/CNY）</label>
+                <input type="number" class="filter-select" id="roiRate" style="width: 100%;" value="7.2" step="0.01" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">月销量（件）</label>
+                <input type="number" class="filter-select" id="roiMonthlySales" style="width: 100%;" value="500" oninput="calculateROI()">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">首批备货量（件）</label>
+                <input type="number" class="filter-select" id="roiStock" style="width: 100%;" value="3000" oninput="calculateROI()">
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-700); display: block; margin-bottom: 6px;">平台回款周期（天）</label>
+                <input type="number" class="filter-select" id="roiPayout" style="width: 100%;" value="14" oninput="calculateROI()">
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="card-header"><div class="card-title">计算结果</div></div>
+              <div class="card-body">
+                <div id="roiResult" style="display: flex; flex-direction: column; gap: 12px;"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">成本结构占比</div></div>
+              <div class="card-body"><div id="roiPieChart" class="chart-container small"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-header"><div class="card-title">现金流与回款周期模拟 <span class="card-title-badge">6个月滚动</span></div></div>
+          <div class="card-body"><div id="roiCashflowChart" class="chart-container" style="min-height: 320px;"></div></div>
         </div>
       </section>
     </div>
@@ -2410,21 +2645,23 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + view).classList.add('active');
     const titles = {
-      prediction: ['爆品预测中心', '/ 万圣节2026 · 美国站 · Amazon'],
-      pain: ['痛点反向拆解', '/ 万圣节装饰品类 · 差评深度挖掘'],
-      trend: ['趋势追踪看板', '/ 关键词热度 · 供需比监测'],
-      competitor: ['竞品深度分析', '/ Top5竞品对标 · 爆款基因拆解'],
-      profit: ['利润测算工具', '/ 成本ROI计算 · 保本销量分析'],
-      combo: ['选品组合推荐', '/ 节日款+通用款 · 运营时间线'],
-      keyword: ['关键词研究中心', '/ 长尾词挖掘 · 竞品流量反查'],
-      supply: ['供应链货源匹配', '/ 1688工厂直供 · 采购成本分析'],
-      inventory: ['库存备货预测', '/ 销量预测 · 补货时间预警'],
-      listing: ['Listing优化助手', '/ AI文案生成 · 关键词埋词检测'],
-      compliance: ['合规风险检测', '/ 认证要求 · 专利侵权预警'],
-      multisite: ['跨站点机会对比', '/ 全球市场 · 最佳进入站点推荐']
+      prediction: '爆品预测中心',
+      pain: '痛点反向拆解',
+      trend: '趋势追踪看板',
+      competitor: '竞品深度分析',
+      profit: '利润测算工具',
+      combo: '选品组合推荐',
+      keyword: '关键词研究中心',
+      supply: '供应链货源匹配',
+      inventory: '库存备货预测',
+      listing: 'Listing优化助手',
+      compliance: '合规风险检测',
+      multisite: '跨站点机会对比',
+      market: '品类市场趋势',
+      compsearch: '竞品深度查询',
+      roicalc: '回款盈亏计算'
     };
-    document.getElementById('pageTitle').textContent = titles[view][0];
-    document.getElementById('pageBreadcrumb').textContent = titles[view][1];
+    document.getElementById('pageTitle').textContent = titles[view] || '爆品预测中心';
     setTimeout(initCharts, 100);
   });
 });
@@ -2871,6 +3108,361 @@ function initButtonEvents() {
   });
 }
 
+// ===== 品类市场趋势分析 =====
+function analyzeMarket() {
+  const keyword = document.getElementById('marketKeyword').value.trim();
+  if (!keyword) {
+    showToast('请输入搜索关键词', 'error');
+    return;
+  }
+  
+  showToast('正在分析市场数据...', 'info');
+  
+  setTimeout(() => {
+    document.getElementById('marketEmpty').style.display = 'none';
+    document.getElementById('marketResult').style.display = 'block';
+    
+    // 生成模拟市场数据
+    const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    // 根据关键词生成不同的季节性模式
+    let basePattern;
+    if (keyword.toLowerCase().includes('halloween') || keyword.toLowerCase().includes('pumpkin')) {
+      basePattern = [50, 40, 35, 30, 28, 32, 45, 80, 180, 420, 380, 60];
+    } else if (keyword.toLowerCase().includes('christmas') || keyword.toLowerCase().includes('xmas')) {
+      basePattern = [60, 45, 35, 30, 28, 30, 35, 50, 120, 280, 450, 520];
+    } else if (keyword.toLowerCase().includes('valentine')) {
+      basePattern = [380, 420, 80, 40, 35, 30, 28, 32, 38, 45, 55, 120];
+    } else {
+      basePattern = [120, 110, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220];
+    }
+    const salesData = basePattern.map(v => Math.round(v * (0.8 + Math.random() * 0.4)));
+    const maxMonth = months[salesData.indexOf(Math.max(...salesData))];
+    const minMonth = months[salesData.indexOf(Math.min(...salesData))];
+    const yearSales = salesData.reduce((a,b) => a+b, 0);
+    
+    document.getElementById('marketYearSales').innerHTML = `${yearSales.toLocaleString()}<span class="kpi-unit">件</span>`;
+    document.getElementById('marketYoY').textContent = `↑ 同比增长 ${Math.round(15 + Math.random()*30)}%`;
+    document.getElementById('marketPeakMonth').textContent = maxMonth;
+    document.getElementById('marketLowMonth').textContent = minMonth;
+    document.getElementById('marketCompetition').innerHTML = `${Math.round(500 + Math.random()*2000)}<span class="kpi-unit">个</span>`;
+    
+    // 渲染月度趋势图
+    const trendEl = document.getElementById('marketTrendChart');
+    if (trendEl) {
+      if (chartInstances.marketTrend) chartInstances.marketTrend.dispose();
+      const chart = echarts.init(trendEl);
+      chart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['销量', '搜索指数'], top: 0 },
+        grid: { left: 60, right: 60, top: 40, bottom: 30 },
+        xAxis: { type: 'category', data: months },
+        yAxis: [
+          { type: 'value', name: '销量(件)', axisLabel: { fontSize: 11 } },
+          { type: 'value', name: '搜索指数', axisLabel: { fontSize: 11 } }
+        ],
+        series: [
+          { name: '销量', type: 'bar', data: salesData, itemStyle: { color: '#F59E0B' } },
+          { name: '搜索指数', type: 'line', yAxisIndex: 1, smooth: true, data: salesData.map(v => Math.round(v*1.5)), lineStyle: { color: '#3B82F6', width: 2 }, itemStyle: { color: '#3B82F6' } }
+        ]
+      });
+      new ResizeObserver(() => chart.resize()).observe(trendEl);
+      chartInstances.marketTrend = chart;
+    }
+    
+    // 平台占比图
+    const platformEl = document.getElementById('marketPlatformChart');
+    if (platformEl) {
+      if (chartInstances.marketPlatform) chartInstances.marketPlatform.dispose();
+      const chart = echarts.init(platformEl);
+      chart.setOption({
+        tooltip: { trigger: 'item' },
+        series: [{
+          type: 'pie', radius: ['40%', '65%'],
+          label: { fontSize: 11, formatter: '{b}\n{d}%' },
+          data: [
+            { value: 45, name: 'Amazon', itemStyle: { color: '#F59E0B' } },
+            { value: 25, name: 'TikTok Shop', itemStyle: { color: '#EF4444' } },
+            { value: 15, name: 'TEMU', itemStyle: { color: '#FB923C' } },
+            { value: 10, name: 'SHEIN', itemStyle: { color: '#3B82F6' } },
+            { value: 5, name: '其他', itemStyle: { color: '#A3A3A3' } }
+          ]
+        }]
+      });
+      new ResizeObserver(() => chart.resize()).observe(platformEl);
+      chartInstances.marketPlatform = chart;
+    }
+    
+    // 价格带分布图
+    const priceEl = document.getElementById('marketPriceChart');
+    if (priceEl) {
+      if (chartInstances.marketPrice) chartInstances.marketPrice.dispose();
+      const chart = echarts.init(priceEl);
+      chart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: 50, right: 20, top: 20, bottom: 30 },
+        xAxis: { type: 'category', data: ['<$10','$10-20','$20-30','$30-50','$50-100','>$100'], axisLabel: { fontSize: 10 } },
+        yAxis: { type: 'value', name: '商品数' },
+        series: [{
+          type: 'bar',
+          data: [120, 340, 280, 180, 90, 35],
+          itemStyle: { color: params => ['#10B981','#3B82F6','#F59E0B','#FB923C','#EF4444','#A3A3A3'][params.dataIndex] }
+        }]
+      });
+      new ResizeObserver(() => chart.resize()).observe(priceEl);
+      chartInstances.marketPrice = chart;
+    }
+    
+    // 市场建议
+    document.getElementById('marketAdvice').innerHTML = `
+      <div style="background: var(--green-100); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <strong style="color: #065F46;">✓ 市场进入建议：可进入</strong>
+        <p style="margin: 8px 0 0; color: #065F46; font-size: 12px;">该品类年销量${yearSales.toLocaleString()}件，同比增长明显，${maxMonth}为销售旺季，建议提前2-3个月备货。</p>
+      </div>
+      <div style="background: var(--amber-100); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <strong style="color: #92400E;">⚠ 风险提示：</strong>
+        <p style="margin: 8px 0 0; color: #92400E; font-size: 12px;">${minMonth}为销售淡季，需控制库存避免积压。$10-30价格带竞争最激烈，建议差异化定位。</p>
+      </div>
+      <div style="background: var(--blue-100); padding: 12px; border-radius: 6px;">
+        <strong style="color: #1E40AF;">💡 运营建议：</strong>
+        <p style="margin: 8px 0 0; color: #1E40AF; font-size: 12px;">重点布局Amazon平台（占比45%），旺季前1个月启动广告，${maxMonth}前2周加大投放力度。</p>
+      </div>
+    `;
+    
+    showToast('市场分析完成', 'success');
+  }, 800);
+}
+
+// ===== 竞品深度查询 =====
+function searchCompetitors() {
+  const productId = document.getElementById('compProductId').value.trim();
+  if (!productId) {
+    showToast('请输入产品ID/ASIN', 'error');
+    return;
+  }
+  
+  showToast('正在查询竞品数据...', 'info');
+  
+  setTimeout(() => {
+    document.getElementById('compEmpty').style.display = 'none';
+    document.getElementById('compResult').style.display = 'block';
+    
+    // 目标产品信息
+    document.getElementById('compTargetInfo').innerHTML = `
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px;">
+        <div>
+          <div style="font-size: 11px; color: var(--text-500); margin-bottom: 4px;">产品名称</div>
+          <div style="font-weight: 600; font-size: 14px;">Rechargeable LED Pumpkin Lights with Remote, 8 Modes Waterproof Outdoor Halloween Decorations</div>
+          <div style="font-size: 11px; color: var(--text-500); margin-top: 4px;">ASIN: ${productId} · 上架时间: 2026-03-15</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; color: var(--text-500); margin-bottom: 4px;">当前价格</div>
+          <div style="font-size: 20px; font-weight: 900; color: var(--amber-500);">$24.99</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; color: var(--text-500); margin-bottom: 4px;">月销量</div>
+          <div style="font-size: 20px; font-weight: 900; color: var(--green-500);">1,280件</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; color: var(--text-500); margin-bottom: 4px;">评分/评论</div>
+          <div style="font-size: 16px; font-weight: 700;">★ 4.3 <span style="font-size: 12px; color: var(--text-500);">(2,847)</span></div>
+        </div>
+      </div>
+    `;
+    
+    // 生成竞品数据
+    const competitors = [
+      { rank: 1, name: 'Halloween LED Pumpkin Lights Rechargeable, 1200mAh Jack O Lantern with Remote', price: 22.99, sales: 2150, rating: 4.5, reviews: 5621, bsr: '#342 in Patio', date: '2025-08-12', asin: 'B0CD123ABC' },
+      { rank: 2, name: 'Outdoor Halloween Decorations Light Up Pumpkin, 8 Modes Waterproof', price: 19.99, sales: 1890, rating: 4.2, reviews: 3456, bsr: '#567 in Patio', date: '2025-09-20', asin: 'B0CD456DEF' },
+      { rank: 3, name: 'Halloween Pumpkin Lights Battery Operated with Timer, 2 Pack', price: 16.99, sales: 1560, rating: 4.0, reviews: 2134, bsr: '#890 in Patio', date: '2026-01-15', asin: 'B0CD789GHI' },
+      { rank: 4, name: 'Solar Halloween Pumpkin Lights Outdoor, Auto On/Off Waterproof', price: 27.99, sales: 980, rating: 4.4, reviews: 1567, bsr: '#1200 in Patio', date: '2026-02-28', asin: 'B0CD012JKL' },
+      { rank: 5, name: 'Halloween Decorations Indoor Pumpkin String Lights, 30 LED', price: 12.99, sales: 2340, rating: 4.1, reviews: 4521, bsr: '#234 in String', date: '2025-10-05', asin: 'B0CD345MNO' },
+      { rank: 6, name: 'Animated Halloween Pumpkin Lights with Sound, Scary Decor', price: 34.99, sales: 650, rating: 4.6, reviews: 892, bsr: '#1500 in Patio', date: '2026-04-10', asin: 'B0CD678PQR' },
+      { rank: 7, name: 'Mini Halloween Pumpkin Lights, 12 Pack Battery Operated', price: 14.99, sales: 1780, rating: 3.9, reviews: 2890, bsr: '#670 in Patio', date: '2025-11-20', asin: 'B0CD901STU' },
+      { rank: 8, name: 'Halloween Pumpkin Projector Lights Outdoor, Holiday LED', price: 29.99, sales: 1120, rating: 4.3, reviews: 1678, bsr: '#980 in Patio', date: '2026-03-01', asin: 'B0CD234VWX' },
+    ];
+    
+    const avgPrice = (competitors.reduce((a,c) => a+c.price, 0) / competitors.length).toFixed(2);
+    const avgSales = Math.round(competitors.reduce((a,c) => a+c.sales, 0) / competitors.length);
+    const minPrice = Math.min(...competitors.map(c => c.price));
+    
+    document.getElementById('compCount').innerHTML = `${competitors.length}<span class="kpi-unit">个</span>`;
+    document.getElementById('compAvgPrice').innerHTML = `$${avgPrice}`;
+    document.getElementById('compAvgSales').innerHTML = `${avgSales.toLocaleString()}<span class="kpi-unit">件</span>`;
+    document.getElementById('compPriceGap').innerHTML = `$${(24.99 - minPrice).toFixed(2)}`;
+    
+    // 渲染竞品表格
+    document.getElementById('compTableBody').innerHTML = competitors.map(c => `
+      <tr>
+        <td><strong style="color: var(--amber-500);">#${c.rank}</strong></td>
+        <td style="max-width: 280px; font-size: 12px;">${c.name}<br><span style="color: var(--text-500); font-size: 11px;">ASIN: ${c.asin}</span></td>
+        <td class="mono" style="color: var(--amber-500); font-weight: 700;">$${c.price}</td>
+        <td class="mono">${c.sales.toLocaleString()}</td>
+        <td class="mono">★ ${c.rating}</td>
+        <td class="mono">${c.reviews.toLocaleString()}</td>
+        <td style="font-size: 11px;">${c.bsr}</td>
+        <td style="font-size: 11px;">${c.date}</td>
+        <td><a href="https://www.amazon.com/dp/${c.asin}" target="_blank" style="color: var(--blue-500); font-size: 12px;">查看链接 →</a></td>
+      </tr>
+    `).join('');
+    
+    // 竞品对比图
+    const compChartEl = document.getElementById('compCompareChart');
+    if (compChartEl) {
+      if (chartInstances.compCompare) chartInstances.compCompare.dispose();
+      const chart = echarts.init(compChartEl);
+      chart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['价格($)', '月销量'], top: 0 },
+        grid: { left: 60, right: 60, top: 40, bottom: 60 },
+        xAxis: { type: 'category', data: competitors.map(c => `竞品${c.rank}`), axisLabel: { fontSize: 10, rotate: 30 } },
+        yAxis: [
+          { type: 'value', name: '价格($)', axisLabel: { fontSize: 11 } },
+          { type: 'value', name: '月销量', axisLabel: { fontSize: 11 } }
+        ],
+        series: [
+          { name: '价格($)', type: 'bar', data: competitors.map(c => c.price), itemStyle: { color: '#F59E0B' } },
+          { name: '月销量', type: 'line', yAxisIndex: 1, smooth: true, data: competitors.map(c => c.sales), lineStyle: { color: '#3B82F6', width: 2 }, itemStyle: { color: '#3B82F6' } }
+        ]
+      });
+      new ResizeObserver(() => chart.resize()).observe(compChartEl);
+      chartInstances.compCompare = chart;
+    }
+    
+    showToast('竞品查询完成，共找到8个直接竞品', 'success');
+  }, 800);
+}
+
+// ===== 回款周期与盈亏计算器 =====
+function calculateROI() {
+  const price = parseFloat(document.getElementById('roiPrice').value) || 0;
+  const cost = parseFloat(document.getElementById('roiCost').value) || 0;
+  const shipping = parseFloat(document.getElementById('roiShipping').value) || 0;
+  const commission = parseFloat(document.getElementById('roiCommission').value) || 0;
+  const fba = parseFloat(document.getElementById('roiFba').value) || 0;
+  const adRatio = parseFloat(document.getElementById('roiAd').value) || 0;
+  const returnRate = parseFloat(document.getElementById('roiReturn').value) || 0;
+  const rate = parseFloat(document.getElementById('roiRate').value) || 7.2;
+  const monthlySales = parseInt(document.getElementById('roiMonthlySales').value) || 0;
+  const stock = parseInt(document.getElementById('roiStock').value) || 0;
+  const payoutDays = parseInt(document.getElementById('roiPayout').value) || 14;
+  
+  // 成本计算（全部换算为人民币）
+  const costRMB = cost + shipping; // 采购+头程
+  const platformFeeUSD = price * (commission / 100) + fba + price * (adRatio / 100);
+  const returnLossUSD = price * (returnRate / 100);
+  const revenueUSD = price - platformFeeUSD - returnLossUSD;
+  const revenueRMB = revenueUSD * rate;
+  const profitPerItemRMB = revenueRMB - costRMB;
+  const profitMargin = (profitPerItemRMB / (price * rate)) * 100;
+  const isProfit = profitPerItemRMB > 0;
+  
+  // 月利润
+  const monthlyProfitRMB = profitPerItemRMB * monthlySales;
+  const monthlyRevenueRMB = price * rate * monthlySales;
+  
+  // 回款周期计算
+  const productionDays = 15; // 生产周期
+  const shippingDays = 20; // 头程运输
+  const shelfDays = 30; // 平均上架销售周期
+  const totalCycleDays = productionDays + shippingDays + shelfDays + payoutDays;
+  // 资金占用
+  const capitalOccupied = costRMB * stock;
+  // 回本周期（月）
+  const paybackMonths = capitalOccupied / Math.max(monthlyProfitRMB, 1);
+  
+  // 渲染结果
+  const resultEl = document.getElementById('roiResult');
+  resultEl.innerHTML = `
+    <div style="padding: 16px; border-radius: 10px; background: ${isProfit ? 'var(--green-100)' : 'var(--red-100)'}; text-align: center;">
+      <div style="font-size: 14px; font-weight: 600; color: ${isProfit ? '#065F46' : '#991B1B'};">${isProfit ? '✓ 盈利' : '✗ 亏损'}</div>
+      <div style="font-size: 32px; font-weight: 900; color: ${isProfit ? '#059669' : '#DC2626'}; margin: 8px 0;">¥${profitPerItemRMB.toFixed(2)}</div>
+      <div style="font-size: 12px; color: ${isProfit ? '#065F46' : '#991B1B'};">单件净利润 · 利润率 ${profitMargin.toFixed(1)}%</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div style="padding: 12px; background: var(--bg-50); border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--text-500);">月净利润</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--green-500);">¥${monthlyProfitRMB.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+      </div>
+      <div style="padding: 12px; background: var(--bg-50); border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--text-500);">月销售额</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--navy-900);">¥${monthlyRevenueRMB.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+      </div>
+      <div style="padding: 12px; background: var(--bg-50); border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--text-500);">资金占用</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--amber-500);">¥${capitalOccupied.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+      </div>
+      <div style="padding: 12px; background: var(--bg-50); border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--text-500);">回本周期</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--blue-500);">${paybackMonths.toFixed(1)}个月</div>
+      </div>
+    </div>
+    <div style="padding: 12px; background: var(--blue-100); border-radius: 8px;">
+      <div style="font-size: 12px; font-weight: 600; color: #1E40AF; margin-bottom: 6px;">📊 完整回款周期：${totalCycleDays}天</div>
+      <div style="font-size: 11px; color: #1E40AF; line-height: 1.8;">
+        生产${productionDays}天 + 头程${shippingDays}天 + 销售${shelfDays}天 + 平台回款${payoutDays}天<br>
+        即从付款备货至收到货款，约需 ${(totalCycleDays/30).toFixed(1)} 个月
+      </div>
+    </div>
+  `;
+  
+  // 成本结构饼图
+  const pieEl = document.getElementById('roiPieChart');
+  if (pieEl) {
+    if (chartInstances.roiPie) chartInstances.roiPie.dispose();
+    const chart = echarts.init(pieEl);
+    const totalCostRMB = costRMB + platformFeeUSD * rate + returnLossUSD * rate;
+    chart.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+      series: [{
+        type: 'pie', radius: ['40%', '65%'],
+        label: { fontSize: 10, formatter: '{b}\n{d}%' },
+        data: [
+          { value: Math.round(cost), name: '采购成本', itemStyle: { color: '#F59E0B' } },
+          { value: Math.round(shipping), name: '头程物流', itemStyle: { color: '#3B82F6' } },
+          { value: Math.round(price * commission / 100 * rate), name: '平台佣金', itemStyle: { color: '#10B981' } },
+          { value: Math.round(fba * rate), name: 'FBA配送', itemStyle: { color: '#8B5CF6' } },
+          { value: Math.round(price * adRatio / 100 * rate), name: '广告费用', itemStyle: { color: '#EF4444' } },
+          { value: Math.round(price * returnRate / 100 * rate), name: '退货损失', itemStyle: { color: '#A3A3A3' } }
+        ]
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(pieEl);
+    chartInstances.roiPie = chart;
+  }
+  
+  // 现金流模拟图
+  const cashEl = document.getElementById('roiCashflowChart');
+  if (cashEl) {
+    if (chartInstances.roiCashflow) chartInstances.roiCashflow.dispose();
+    const chart = echarts.init(cashEl);
+    // 6个月现金流模拟
+    const months = ['第1月','第2月','第3月','第4月','第5月','第6月'];
+    const cashFlow = [];
+    let cumulative = -capitalOccupied; // 初始资金占用
+    for (let i = 0; i < 6; i++) {
+      const monthlyIn = i >= 2 ? monthlyProfitRMB : (i === 1 ? monthlyProfitRMB * 0.3 : 0);
+      cumulative += monthlyIn;
+      cashFlow.push(Math.round(cumulative));
+    }
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['累计现金流'], top: 0 },
+      grid: { left: 70, right: 30, top: 40, bottom: 30 },
+      xAxis: { type: 'category', data: months },
+      yAxis: { type: 'value', name: '金额(¥)', axisLabel: { fontSize: 11 } },
+      series: [{
+        name: '累计现金流', type: 'line', smooth: true, data: cashFlow,
+        lineStyle: { color: cashFlow[cashFlow.length-1] > 0 ? '#10B981' : '#EF4444', width: 3 },
+        itemStyle: { color: cashFlow[cashFlow.length-1] > 0 ? '#10B981' : '#EF4444' },
+        areaStyle: { color: cashFlow[cashFlow.length-1] > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' },
+        markLine: { data: [{ yAxis: 0, lineStyle: { color: '#666', type: 'dashed' } }] }
+      }]
+    });
+    new ResizeObserver(() => chart.resize()).observe(cashEl);
+    chartInstances.roiCashflow = chart;
+  }
+}
+
 // ===== 重新生成数据 =====
 function regenerateData() {
   const region = document.getElementById('regionSelect').value;
@@ -2949,6 +3541,7 @@ initFilters();
 initButtonEvents();
 initCharts();
 calculateProfit();
+calculateROI();
 
 // 点击遮罩关闭弹窗
 document.getElementById('productModal').addEventListener('click', (e) => {
